@@ -1,0 +1,48 @@
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+.idea/
+/classes
+/dist
+/out
+/SDK/*SDK
+/target
+/target/*
+*/target/*
+/*.bat
+bin/
+build/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+
+*.class
+
+*.jar
+*.war
+*.ear
+*.class
+
+*.tmp
+*.bak
+*.swp
+*~.nib
+*.timestamp
+*.iml
+
+## File-based project format:
+*.ipr
+*.iws
+
+
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
