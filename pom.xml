@@ -19,6 +19,11 @@
         </license>
     </licenses>
 
+    <scm>
+        <url>https://github.com/xkommando/CodeSniffer</url>
+        <connection>scm:https://github.com/xkommando/CodeSniffer.git</connection>
+    </scm>
+
     <groupId>codesniffer</groupId>
     <artifactId>core</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -41,7 +46,6 @@
         <mvn-surefire-plugin>2.18.1</mvn-surefire-plugin>
         <mvn-scala-plugin>2.15.2</mvn-scala-plugin>
         <mvn-src-plugin>2.4</mvn-src-plugin>
-
 
     </properties>
 

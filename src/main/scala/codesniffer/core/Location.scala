@@ -8,7 +8,7 @@ package codesniffer.core
  * scope is organised as tree,
  * one location can be represented as a linked list if trace back to the root
  *
- * Created by Bowen Cai on 4/17/2015.
+ * Created by Bowen Cai on 4/12/2015.
  */
 sealed trait Scope{
   def parent: Scope
@@ -34,26 +34,32 @@ final case class MethodScope(name: String, parent: Scope) extends Scope {
   override def toString = parent.toString + "->" + name
 }
 
-case class Location(file: String, var scope: Scope, line: Int) {
+case class Location(file: String, val scope: Scope, line: Int) {
   override def toString = s"$file ln:$line $scope"
 
   /**
-   * enter a new scope, e.g., append new node to linked list
-   * @param next
+   *
+   * enter a new scope, e.g., append new node to linked list, and return this list (a new location)
+   *
+   * @param name
+   * @param ln
+   * @return
    */
-  def enter(next: ClassScope): Unit = this.scope = new ClassScope(next.name, this.scope)
-  def enterClass(name: String): Unit = this.scope = new ClassScope(name, this.scope)
-  def enter(next: MethodScope): Unit = this.scope = new MethodScope(next.name, this.scope)
-  def enterMethod(name: String): Unit = this.scope = new MethodScope(name, this.scope)
+  def enterClass(name: String, ln: Int): Location =
+    copy(scope = new ClassScope(name, this.scope), line = ln)
+
+  def enterClass(name: String, nfile: String, ln: Int): Location =
+    copy(scope = new ClassScope(name, this.scope), file = nfile, line = ln)
+
+  def enterMethod(name: String, ln: Int): Location =
+    copy(scope = new MethodScope(name, this.scope), line = ln)
 
 
-  /**
-   * pop tail and leave this place
-   */
-  def leave(): Scope = {
-    val last = this.scope
-    this.scope = this.scope.parent
-    last
-  }
+//  /**
+//   * pop tail and leave this scope
+//   *
+//   */
+//  def upperLocation(): Location =
+//    copy(scope = this.scope.parent)
 }
 

@@ -1,4 +1,4 @@
-package codesniffer.core
+package codesniffer.vgen
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.Expression
@@ -6,7 +6,7 @@ import com.github.javaparser.ast.stmt.Statement
 
 
 /**
- * Created by Bowen Cai on 4/15/2015.
+ * Created by Bowen Cai on 4/12/2015.
  */
 class Config {
 

@@ -2,7 +2,7 @@ package codesniffer.core
 
 
 /**
- * Created by Bowen Cai on 4/17/2015.
+ * Created by Bowen Cai on 4/13/2015.
  */
 object MethodSignature {
   val empty = new MethodSignature("UNK", None, None, None)

@@ -6,52 +6,74 @@ import java.util.Collections
 import codesniffer.core._
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.`type`._
-import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
+import com.github.javaparser.ast.expr.{UnaryExpr, BooleanLiteralExpr, BinaryExpr, LiteralExpr}
 import com.github.javaparser.ast.stmt.ExpressionStmt
-import com.github.javaparser.ast.visitor.GenericVisitorAdapter
+import com.github.javaparser.ast.visitor.{VoidVisitorAdapter, VoidVisitor, GenericVisitorAdapter}
+import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
 /**
- * Created by Bowen Cai on 4/16/2015.
+ * Created by Bowen Cai on 4/10/2015.
  */
-class MethodVisitor extends GenericVisitorAdapter[Option[CharacVec], Context] {
+class MethodVisitor extends VoidVisitorAdapter[Context] {
 
-  override def visit (method: MethodDeclaration, ctx: Context): Option[CharacVec] = {
+  @BeanProperty var classVisitor: VoidVisitorAdapter[Context] = _
+
+  override def visit (method: MethodDeclaration, ctx: Context): Unit = {
     val modifiers = method.getModifiers
     if (!Modifier.isAbstract(modifiers) && !Modifier.isNative(modifiers)
       && method.getBody != null
       && method.getBody.getStmts != null && method.getBody.getStmts.size() > 0) {
 
       val methodName = method.getName
+      val loc = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
+      val vec = new CharacVec[String](ctx.indexer, loc, methodName, extractSignature(method))
 
-      ctx.location.enterMethod(methodName)
-      val vec = new CharacVec(ctx, ctx.location.copy(), methodName, extractSignature(method))
+//      vec.put("___MS_TYPE")
 
       val stmts = method.getBody.getStmts
-      for(stmt <- stmts)
-        collectNode(stmt, vec)
+      for (stmt <- stmts)
+        collectNode(stmt, vec)(ctx)
 
-      ctx.location.leave()
-      Some(vec)
-    } else None
-  }
-
-  protected def collectNode(pnode: Node, vec: CharacVec): Unit = if (!vec.context.config.NodeFilter(pnode)) {
-    val node = if (pnode.isInstanceOf[ExpressionStmt])
-      pnode.asInstanceOf[ExpressionStmt].getExpression
-    else pnode
-
-    vec.put(node)
-    val children = node.getChildrenNodes
-    if (children != null && children.size() > 0) {
-      for (n <- children)
-        collectNode(n, vec)
+      ctx.vecWriter.write(vec)
     }
   }
 
-//  case class MethodSignature(typeName: String, // why not ref javaparser.Type? javaparser.Type is a node and may cause mem leak
-//                             parameterTypes: Option[Array[String]],
-//                             annotations: Option[Array[String]],
-//                             throws: Option[Array[String]]
+  protected def collectNode(pnode: Node, vec: CharacVec[String])(implicit ctx: Context): Unit =
+    if (!ctx.config.NodeFilter(pnode)) {
+
+      // skip ExpressionStmt
+      val node = if (pnode.isInstanceOf[ExpressionStmt])
+        pnode.asInstanceOf[ExpressionStmt].getExpression
+      else pnode
+
+      if (node.isInstanceOf[ClassOrInterfaceDeclaration]
+          && !node.asInstanceOf[ClassOrInterfaceDeclaration].isInterface) {
+
+        classVisitor.visit(node.asInstanceOf[ClassOrInterfaceDeclaration], ctx)
+
+      } else {
+//        node.getClass.getSimpleName
+        vec.put(findTypeName(node))
+
+        val children = node.getChildrenNodes
+        if (children != null && children.size() > 0) {
+          for (n <- children)
+            collectNode(n, vec)
+        }
+      }
+    }
+
+  protected def findTypeName(node: Node): String = node match {
+    case a: BooleanLiteralExpr =>
+      if (node.asInstanceOf[BooleanLiteralExpr].getValue)
+          "__BOOL_TRUE___"
+      else "__BOOL_FALSE___"
+    case a: PrimitiveType => a.asInstanceOf[PrimitiveType].getType.name()
+    case a: BinaryExpr => a.asInstanceOf[BinaryExpr].getOperator.name()
+    case a: UnaryExpr => a.asInstanceOf[UnaryExpr].getOperator.name()
+    case _ => node.getClass.getSimpleName
+  }
 
   protected def extractSignature(m: MethodDeclaration): MethodSignature = {
 

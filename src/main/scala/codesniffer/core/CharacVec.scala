@@ -1,16 +1,12 @@
 package codesniffer.core
 
-import com.github.javaparser.ast.Node
-
-import scala.collection.mutable.ArrayBuffer
-
 /**
- * Created by Bowen Cai on 4/16/2015.
+ *
+ * @tparam T dimension type
+ *
+ * Created by Bowen Cai on 4/10/2015.
  */
-//object CharacVec {
-//  val empty = new CharacVec(null)
-//}
-case class CharacVec(context: Context,
+case class CharacVec[T](indexer: Indexer[T],
                     location: Location,
                     methodName: String,
                     signature: MethodSignature // TODO: replaced with symbol table later
@@ -20,18 +16,20 @@ case class CharacVec(context: Context,
   private[this] var _count = 0
 
   def count = _count
+  def validNodeTypeCount = indexer.maxIndex
 
   /**
    * put one node to this vector, the occurrence count of this type of node will ++
    *
-   * @param o
-   * @tparam T
+   * @param name
    * @return
    */
-  def put[T <: Node](o: T): Int = {
-    val idx = context.index(o.getClass)
+  def put(name: T): Int = put(name, 1)
+
+  def put(name: T, number: Int): Int = {
+    val idx = indexer.indexOf(name)
     ensureSize(idx + 1)
-    vector(idx) += 1
+    vector(idx) += number
     _count += 1
     _count
   }
@@ -40,8 +38,8 @@ case class CharacVec(context: Context,
    * merge one vector to this one, i.e., accumulate occurrence count
    * @param other
    */
-  def merge(other: CharacVec): Unit = {
-    if (other.context == context) {
+  def merge(other: CharacVec[T]): this.type = {
+    if (other.indexer == indexer) {
       val otherSz = other.vector.size
       val minLen = if (otherSz > vector.length) {
         ensureSize(otherSz)
@@ -54,8 +52,23 @@ case class CharacVec(context: Context,
       _count += other.count
 
     } else throw new IllegalArgumentException(
-      s"Could not merge vectors built under different contexts vectors: $this, \r\n$other")
+      s"Could not merge vectors built under different indexer(different coordinates): $this, \r\n$other")
+    this
+  }
 
+  def +=(other: CharacVec[T]): Unit = merge(other)
+
+  def euclideanDist(other: CharacVec[T]): Double = {
+    if (other.indexer == indexer) {
+      var sum = 0.0
+      for(i <- 0 to indexer.maxIndex) {
+        val p = vector(i)
+        val dist = other.vector(i) - p
+        sum += dist * dist
+      }
+      math.sqrt(sum)
+    }else throw new IllegalArgumentException(
+      s"Could not calculate Euclidean distance of two vectors in different coordinates: $this, \r\n$other")
   }
 
   protected def ensureSize(n: Int): Unit = {
@@ -69,6 +82,8 @@ case class CharacVec(context: Context,
       vector = newar
     }
   }
+
+
     /**
      * for debug
      * @return
@@ -76,9 +91,9 @@ case class CharacVec(context: Context,
     override def toString = {
       val sb = new StringBuilder(2048)
       for (i <- 0 until vector.length) {
-        val tp = context.klass(i)
+        val tp = indexer.valueAt(i)
         val name = if (tp.isDefined)
-          tp.get.getSimpleName
+          tp.get
         else "UNK"
         sb.append(name + ":" + vector(i)).append("\r\n")
       }

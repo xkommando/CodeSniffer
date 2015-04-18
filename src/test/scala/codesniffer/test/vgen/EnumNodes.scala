@@ -13,7 +13,7 @@ import scala.collection.convert.wrapAsScala._
 import scala.collection.mutable.HashMap
 
 /**
- * Created by Bowen Cai on 4/16/2015.
+ * Created by Bowen Cai on 4/9/2015.
  */
 class EnumNodes {
 
