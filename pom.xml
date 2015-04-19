@@ -4,6 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>codesniffer</groupId>
+    <artifactId>parent</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+
     <developers>
         <developer>
             <id>xKommando</id>
@@ -23,11 +29,10 @@
         <url>https://github.com/xkommando/CodeSniffer</url>
         <connection>scm:https://github.com/xkommando/CodeSniffer.git</connection>
     </scm>
-
-    <groupId>codesniffer</groupId>
-    <artifactId>core</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <modules>
+        <module>core</module>
+        <module>webface</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,13 +47,16 @@
         <mysql-j-version>5.1.33</mysql-j-version>
         <hikariCP-version>2.1.0</hikariCP-version>
 
+        <lift-json-version>2.5.1</lift-json-version>
+        <gp-web-version>2.0</gp-web-version>
+
         <mvn-compile-plugin>2.3.2</mvn-compile-plugin>
         <mvn-surefire-plugin>2.18.1</mvn-surefire-plugin>
         <mvn-scala-plugin>2.15.2</mvn-scala-plugin>
         <mvn-src-plugin>2.4</mvn-src-plugin>
 
     </properties>
-
+    
     <dependencies>
 
         <dependency>
@@ -62,12 +70,6 @@
             <artifactId>junit</artifactId>
             <version>${junit-version}</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-core</artifactId>
-            <version>${jparser-version}</version>
         </dependency>
 
     </dependencies>
@@ -98,5 +100,6 @@
             </plugin>
         </plugins>
     </build>
+
 
 </project>

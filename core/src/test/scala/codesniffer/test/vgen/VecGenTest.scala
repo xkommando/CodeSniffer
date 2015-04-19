@@ -38,7 +38,7 @@ class VecGenTest {
       }
 
       ctx.vecWriter.asInstanceOf[MemWriter].foreach(println)
-      val ls = ctx.vecWriter.asInstanceOf[MemWriter].result()
+      val ls = (ctx.vecWriter.asInstanceOf[MemWriter]).toVector.asInstanceOf[Vector[CharacVec[String]]]
 
       val totalNodes = ls.foldLeft(0){(count, vec)=>
         count + vec.count

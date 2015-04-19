@@ -1,6 +1,5 @@
 package codesniffer.vgen
 
-import Context
 import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclaration}
 import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
 import scala.beans.BeanProperty

@@ -40,7 +40,7 @@ case class CharacVec[T](indexer: Indexer[T],
    */
   def merge(other: CharacVec[T]): this.type = {
     if (other.indexer == indexer) {
-      val otherSz = other.vector.size
+      val otherSz = other.vector.length
       val minLen = if (otherSz > vector.length) {
         ensureSize(otherSz)
         vector.length
