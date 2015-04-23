@@ -14,12 +14,18 @@ class ClassVisitor extends VoidVisitorAdapter[Context] {
 
   override def visit(klass: ClassOrInterfaceDeclaration, ctx: Context): Unit =
     if (!klass.isInterface) {
-      val loc = ctx.currentLocation.enterClass(klass.getName, klass.getBeginLine)
-      ctx.currentLocation = loc
 
-      for (method <- klass.getMembers if method.isInstanceOf[MethodDeclaration]) {
-        methodVisitor.visit(method.asInstanceOf[MethodDeclaration], ctx)
+      val prevLoc = ctx.currentLocation
+      ctx.currentLocation = ctx.currentLocation.enterClass(klass.getName, klass.getBeginLine)
+
+      for (member <- klass.getMembers) member match {
+        case method: MethodDeclaration => methodVisitor.visit(method, ctx)
+        case classDef: ClassOrInterfaceDeclaration => this.visit(classDef, ctx)
+        case _ =>
       }
+
+      // leave this class scope
+      ctx.currentLocation = prevLoc
     }
 
 

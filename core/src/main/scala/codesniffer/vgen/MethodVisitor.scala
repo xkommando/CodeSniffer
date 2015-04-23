@@ -7,7 +7,7 @@ import codesniffer.core._
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.`type`._
 import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
-import com.github.javaparser.ast.expr.{UnaryExpr, BooleanLiteralExpr, BinaryExpr, LiteralExpr}
+import com.github.javaparser.ast.expr._
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.visitor.{VoidVisitorAdapter, VoidVisitor, GenericVisitorAdapter}
 import scala.beans.BeanProperty
@@ -26,16 +26,19 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
       && method.getBody.getStmts != null && method.getBody.getStmts.size() > 0) {
 
       val methodName = method.getName
-      val loc = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
-      val vec = new CharacVec[String](ctx.indexer, loc, methodName, extractSignature(method))
 
-//      vec.put("___MS_TYPE")
+      val prevLoc = ctx.currentLocation
+      ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
+
+      val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method), None)
 
       val stmts = method.getBody.getStmts
       for (stmt <- stmts)
         collectNode(stmt, vec)(ctx)
 
       ctx.vecWriter.write(vec)
+
+      ctx.currentLocation = prevLoc
     }
   }
 
@@ -53,8 +56,10 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
         classVisitor.visit(node.asInstanceOf[ClassOrInterfaceDeclaration], ctx)
 
       } else {
+//        case n: MethodCallExpr =>
+//        case _ =>
 //        node.getClass.getSimpleName
-        vec.put(findTypeName(node))
+        vec.put(findNodeName(node))
 
         val children = node.getChildrenNodes
         if (children != null && children.size() > 0) {
@@ -64,7 +69,7 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
       }
     }
 
-  protected def findTypeName(node: Node): String = node match {
+  protected def findNodeName(node: Node): String = node match {
     case a: BooleanLiteralExpr =>
       if (node.asInstanceOf[BooleanLiteralExpr].getValue)
           "__BOOL_TRUE___"
@@ -75,25 +80,30 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
     case _ => node.getClass.getSimpleName
   }
 
-  protected def extractSignature(m: MethodDeclaration): MethodSignature = {
+  protected def extractSignature(m: MethodDeclaration): MethodDescriptor = {
 
     val paramTypeNames = if (null == m.getParameters || m.getParameters.size() == 0) None
-      else Some(m.getParameters.map{p=>extractTypeName(p.getType)}.toArray)
+      else Some(m.getParameters.map{p=>extractTypeName(p.getType)}.toSeq)
     val annotationNames = if (null == m.getAnnotations || m.getAnnotations.size() == 0) None
-      else Some(m.getAnnotations.map(_.getName.getName).toArray)
+      else Some(m.getAnnotations.map(_.getName.getName).toSeq)
     val throwNames = if (null == m.getThrows || m.getThrows.size() == 0) None
-      else Some(m.getThrows.map(_.getName).toArray)
+      else Some(m.getThrows.map(_.getName).toSeq)
 
-    new MethodSignature(extractTypeName(m.getType),
+    new MethodDescriptor(extractTypeName(m.getType),
                         paramTypeNames,
                         annotationNames,
                         throwNames)
   }
 
   protected def extractTypeName(tp: Type): String = tp match {
-    case a : ClassOrInterfaceType => a.getName
+    case a : ClassOrInterfaceType =>
+      a.getName
     case a : PrimitiveType => a.getType.name()
-    case a : ReferenceType => extractTypeName(a.getType)
+    case a : ReferenceType =>
+      val name = extractTypeName(a.getType)
+      val arr = a.getArrayCount
+      if (arr == 0) name
+      else arr + "D-Array[" + name + "]"
     case _ : VoidType => "void"
     case _ : WildcardType => "Wildcard"
     case _  => "UNK"

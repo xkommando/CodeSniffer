@@ -25,5 +25,5 @@ case object StackTraceSerializer extends CustomSerializer[StackTraceElement](for
 
 object JSON {
 
-  val fmt = DefaultFormats
+  val fmt = DefaultFormats + StackTraceSerializer
 }

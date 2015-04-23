@@ -1,5 +1,6 @@
 package codesniffer.core
 
+import scala.StringBuilder
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
@@ -16,6 +17,8 @@ class Indexer[T: ClassTag] {
   private var index2ValMap = new Array[T](128)
 
   def maxIndex = val2IndexMap.size
+
+  def probe(value: T): Option[Int] = val2IndexMap.get(value)
 
   /**
    *
@@ -40,6 +43,47 @@ class Indexer[T: ClassTag] {
     if (idx < index2ValMap.length)
       Option(index2ValMap(idx)) // may be null
     else None
+
+  /**
+   * remove entry of of this value
+   * @param value
+   * @return index of this key, None if not find
+   */
+  def remove(value: T): Option[Int] = {
+    val optIdx = val2IndexMap.remove(value)
+    if(optIdx.isDefined) {
+      index2ValMap(optIdx.get) = null.asInstanceOf[T]
+    }
+    optIdx
+  }
+
+  /**
+   * remove entry at this index
+   * @param index
+   * @return key, i.e., the value at this index, None if not find
+   */
+  def remove(index: Int): Option[T] = {
+    val optP = val2IndexMap.find(_._2 == index)
+    if (optP.isDefined){
+      val pair = optP.get
+      val2IndexMap -= pair._1
+      index2ValMap(pair._2) = null.asInstanceOf[T]
+      Some(optP.get._1)
+    } else None
+  }
+
+  /**
+   * clear this indexer, but keep the memory
+   */
+  def clear(): Unit = {
+    for(i <- 0 until index2ValMap.length)
+      index2ValMap(i) = null.asInstanceOf[T]
+    val2IndexMap.clear()
+  }
+
+  def appendTo(sb: mutable.StringBuilder): mutable.StringBuilder = index2ValMap.take(val2IndexMap.size).addString(sb, " ")
+  override def toString = appendTo(new StringBuilder(val2IndexMap.size * 15)).toString()
+
 
   override def equals(o: Any): Boolean = o match {
     case other: Indexer[T] =>

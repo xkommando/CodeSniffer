@@ -10,7 +10,7 @@ package codesniffer.core
  *
  * Created by Bowen Cai on 4/12/2015.
  */
-sealed trait Scope{
+sealed trait Scope {
   def parent: Scope
 }
 
@@ -26,6 +26,7 @@ final case class ClassScope(name: String, parent: Scope) extends Scope {
     case a: PackageScope => parent.toString + "." + name
     case a: ClassScope => parent.toString + "$" + name
     case a: MethodScope => parent.toString + "/" + name
+    case _ => name
   }
 }
 
@@ -34,8 +35,9 @@ final case class MethodScope(name: String, parent: Scope) extends Scope {
   override def toString = parent.toString + "->" + name
 }
 
-case class Location(file: String, scope: Scope, line: Int) {
-  override def toString = s"$file ln:$line $scope"
+
+case class Location(file: String, line: Int, scope: Scope) {
+
 
   /**
    *
@@ -45,15 +47,21 @@ case class Location(file: String, scope: Scope, line: Int) {
    * @param ln
    * @return
    */
-  def enterClass(name: String, ln: Int) =
-    copy(scope = new ClassScope(name, this.scope), line = ln)
+  def enterClass(name: String, ln: Int): Location = {
+    val ns = new ClassScope(name, this.scope)
+    copy(line = ln, scope = ns)
+  }
 
-  def enterClass(name: String, nfile: String, ln: Int) =
-    copy(scope = new ClassScope(name, this.scope), file = nfile, line = ln)
+  def enterClass(name: String, nfile: String, ln: Int): Location = {
+    val ns = new ClassScope(name, this.scope)
+    copy(file = nfile, line = ln, scope = ns)
+  }
 
   def enterMethod(name: String, ln: Int) =
     copy(scope = new MethodScope(name, this.scope), line = ln)
 
+
+  override def toString = s"$file ln:$line $scope"
 
 //  /**
 //   * pop tail and leave this scope

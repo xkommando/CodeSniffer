@@ -1,37 +1,87 @@
 package codesniffer.core
 
+import codesniffer.core.CharacVec.MethodCall
+
+
 /**
  *
  * @tparam T dimension type
  *
  * Created by Bowen Cai on 4/10/2015.
  */
+object CharacVec {
+  type MethodCall = Tuple2[String, String]
+}
 case class CharacVec[T](indexer: Indexer[T],
                     location: Location,
                     methodName: String,
-                    signature: MethodSignature // TODO: replaced with symbol table later
-                      ) {
+                    descriptor: MethodDescriptor, // TODO: integrate with symbol table
+                    calls: Option[Seq[MethodCall]]
+                      ) {//extends IndexedSeq[Int] with IndexedSeqLike[Int, CharacVec[T]] {
 
-  private var vector: Array[Int] = new Array[Int](64)
+
+//  private
+  var vector: Array[Int] = new Array[Int](64)
   private[this] var _count = 0
+
 
   def count = _count
   def validNodeTypeCount = indexer.maxIndex
+//  override def seq = vector
+
+  def apply(index: Int): Int = vector(index)
+
+  def apply(name: T): Int = {
+    val optIdx = indexer.probe(name)
+    if (optIdx.isDefined && optIdx.get < vector.length)
+      vector(optIdx.get)
+    else throw new NoSuchElementException(name.toString)
+  }
+
+  def get(name: T): Option[Int] = {
+    val optIdx = indexer.probe(name)
+    if (optIdx.isDefined && optIdx.get < vector.length)
+      Some(vector(optIdx.get))
+    else None
+  }
+  
 
   /**
-   * put one node to this vector, the occurrence count of this type of node will ++
    *
    * @param name
+   * @param weight of this type, by default 1
    * @return
    */
-  def put(name: T): Int = put(name, 1)
-
-  def put(name: T, number: Int): Int = {
+  def put(name: T, weight: Int  = 1): Int = {
     val idx = indexer.indexOf(name)
     ensureSize(idx + 1)
-    vector(idx) += number
-    _count += 1
+    vector(idx) += weight
+    _count += weight
     _count
+  }
+
+  def remove(name: T, weight: Int  = 1): Int = {
+    val optIdx = indexer.probe(name)
+    if (optIdx.isDefined && optIdx.get < vector.length) {
+      vector(optIdx.get) -= weight
+      _count -= weight
+      _count
+    } else throw new NoSuchElementException(name.toString)
+  }
+
+  def update(name: T, weight: Int): Int = {
+    val optIdx = indexer.probe(name)
+    if (optIdx.isDefined && optIdx.get < vector.length) {
+      vector(optIdx.get) -= weight
+      _count = weight
+      _count
+    } else throw new NoSuchElementException(name.toString)
+  }
+
+  def clear(): Unit = {
+    for (i <- 0 until vector.length)
+      vector(i) = 0
+    _count = 0
   }
 
   /**
@@ -58,19 +108,6 @@ case class CharacVec[T](indexer: Indexer[T],
 
   def +=(other: CharacVec[T]): Unit = merge(other)
 
-  def euclideanDist(other: CharacVec[T]): Double = {
-    if (other.indexer == indexer) {
-      var sum = 0.0
-      for(i <- 0 to indexer.maxIndex) {
-        val p = vector(i)
-        val dist = other.vector(i) - p
-        sum += dist * dist
-      }
-      math.sqrt(sum)
-    }else throw new IllegalArgumentException(
-      s"Could not calculate Euclidean distance of two vectors in different coordinates: $this, \r\n$other")
-  }
-
   protected def ensureSize(n: Int): Unit = {
     if (n > vector.length) {
       var newsize = vector.length * 2
@@ -89,14 +126,48 @@ case class CharacVec[T](indexer: Indexer[T],
      * @return
      */
     override def toString = {
-      val sb = new StringBuilder(2048)
-      for (i <- 0 until vector.length) {
-        val tp = indexer.valueAt(i)
-        val name = if (tp.isDefined)
-          tp.get
-        else "UNK"
-        sb.append(name + ":" + vector(i)).append("\r\n")
-      }
+      val sb = new StringBuilder(1024, location.toString).append('\n')
+      sb.append(methodName).append(':')
+      descriptor.appendTo(sb).append('\t').append(_count).append(" nodes\n")
+      vector.take(indexer.maxIndex).addString(sb, " ")
       sb.toString()
     }
+
+  object math {
+
+    def EuclideanDist(other: CharacVec[T]): Double = {
+      if (other.indexer == indexer) {
+        var sum = 0.0
+        for(i <- 0 until indexer.maxIndex) {
+          val p = vector(i)
+          val dist = other.vector(i) - p
+          sum += dist * dist
+        }
+        java.lang.Math.sqrt(sum)
+      } else throw new IllegalArgumentException(
+        s"Could not calculate Euclidean distance of two vectors in different coordinates: $this, \r\n$other")
+    }
+
+  }
 }
+//object CharacVec {
+//
+//  def apply[T](indexer: Indexer[T],
+//               location: Location,
+//               methodName: String,
+//               signature: MethodSignature) = new CharacVec[T](indexer, location, methodName, signature)
+//
+//
+//  def newBuilder[T](indexer: Indexer[T],
+//                    location: Location,
+//                    methodName: String,
+//                    signature: MethodSignature): Builder[Int, CharacVec[T]] =
+//    new ArrayBuffer mapResult { x: ArrayBuffer[Int] => fromSeq(name, x) }
+//
+//  implicit def canBuildFrom[T]: CanBuildFrom[CharacVec[T], Int, CharacVec[T]] =
+//    new CanBuildFrom[CharacVec[_], Int, CharacVec[Int]] {
+//      def apply(): Builder[Int, CharacVec[T]] = newBuilder("default")
+//      def apply(from: CharacVec[_]): Builder[Int, CharacVec[T]] =
+//        newBuilder(from.name)
+//    }
+//}
