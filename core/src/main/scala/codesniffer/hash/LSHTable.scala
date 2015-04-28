@@ -31,14 +31,14 @@ class LSHTable(val param: HashParam, val random: Random, nPointsEstimate: Int) {
     val mainH = (0 until param.paramK).map(_=> random.nextInt(1, D.MAX_HASH_RND)).toArray
     val controlH = (0 until param.paramK).map(_=> random.nextInt(1, D.MAX_HASH_RND)).toArray
 
-    (0 until param.paramL) map { _ =>
+    (0 until param.paramL).map{_ =>
       new UHashStruct(
         new Array[GBucket](nPointsEstimate),
         new Array[Point](nPointsEstimate),
         D.UH_PRIME_DEFAULT,
         mainH,
         controlH)
-    } toArray
+    }.toArray
   }
 
   /**

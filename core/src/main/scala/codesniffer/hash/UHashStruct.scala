@@ -40,7 +40,7 @@ class UHashStruct(hashTable: Array[GBucket],
     val control1 = combineAt(D.UHF_CONTROL1_INDEX)
 
     var p = hashTable(hIndex)
-    while (p != null && p.controlValue1 != controlHash1) p = p.next
+    while (p != null && p.controlValue1 != control1) p = p.next
     if (p == null) {
       nHashedBuckets += 1
       val ngb = new GBucket(control1, pointIdx, next = hashTable(hIndex))

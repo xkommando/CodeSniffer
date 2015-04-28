@@ -110,6 +110,8 @@ object X {
 
   }
 
+  import scala.language.implicitConversions
+
   implicit def applyConversion(r: Random) = new RandomExt(r.self)
 
 

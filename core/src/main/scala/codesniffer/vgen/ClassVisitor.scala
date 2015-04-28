@@ -15,6 +15,7 @@ class ClassVisitor extends VoidVisitorAdapter[Context] {
   override def visit(klass: ClassOrInterfaceDeclaration, ctx: Context): Unit =
     if (!klass.isInterface) {
 
+      // update location
       val prevLoc = ctx.currentLocation
       ctx.currentLocation = ctx.currentLocation.enterClass(klass.getName, klass.getBeginLine)
 
