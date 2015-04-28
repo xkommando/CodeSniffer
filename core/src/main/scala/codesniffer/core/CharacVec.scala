@@ -3,15 +3,16 @@ package codesniffer.core
 import codesniffer.core.CharacVec.MethodCall
 
 
+
+object CharacVec {
+  type MethodCall = (String, String)
+}
 /**
  *
  * @tparam T dimension type
  *
  * Created by Bowen Cai on 4/10/2015.
  */
-object CharacVec {
-  type MethodCall = Tuple2[String, String]
-}
 case class CharacVec[T](indexer: Indexer[T],
                     location: Location,
                     methodName: String,
@@ -20,14 +21,24 @@ case class CharacVec[T](indexer: Indexer[T],
                       ) {//extends IndexedSeq[Int] with IndexedSeqLike[Int, CharacVec[T]] {
 
 
-//  private
-  var vector: Array[Int] = new Array[Int](64)
+  var id = -1
+  private var vector: Array[Int] = new Array[Int](64)
   private[this] var _count = 0
 
 
   def count = _count
-  def validNodeTypeCount = indexer.maxIndex
+  def validNodeTypeCount = indexer.maxIndex + 1
 //  override def seq = vector
+
+  lazy val intern: Array[Int] = {
+    val sz = indexer.maxIndex + 1
+    val arr = new Array[Int](sz)
+    System.arraycopy(vector, 0, arr, 0, sz)
+    vector = arr
+    vector
+  }
+
+  def length = indexer.maxIndex + 1
 
   def apply(index: Int): Int = vector(index)
 
@@ -120,7 +131,6 @@ case class CharacVec[T](indexer: Indexer[T],
     }
   }
 
-
     /**
      * for debug
      * @return
@@ -129,22 +139,16 @@ case class CharacVec[T](indexer: Indexer[T],
       val sb = new StringBuilder(1024, location.toString).append('\n')
       sb.append(methodName).append(':')
       descriptor.appendTo(sb).append('\t').append(_count).append(" nodes\n")
-      vector.take(indexer.maxIndex).addString(sb, " ")
+      vector.take(indexer.maxIndex + 1).addString(sb, " ")
       sb.toString()
     }
 
   object math {
 
     def EuclideanDist(other: CharacVec[T]): Double = {
-      if (other.indexer == indexer) {
-        var sum = 0.0
-        for(i <- 0 until indexer.maxIndex) {
-          val p = vector(i)
-          val dist = other.vector(i) - p
-          sum += dist * dist
-        }
-        java.lang.Math.sqrt(sum)
-      } else throw new IllegalArgumentException(
+      if (other.indexer == indexer)
+        X.EuclideanDist(vector, other.vector, length)
+      else throw new IllegalArgumentException(
         s"Could not calculate Euclidean distance of two vectors in different coordinates: $this, \r\n$other")
     }
 

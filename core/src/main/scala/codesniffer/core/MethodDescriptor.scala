@@ -14,7 +14,6 @@ case class MethodDescriptor(typeName: String, // why not ref javaparser.Type? ja
                             ) {
 
   def appendTo(sb: StringBuilder): StringBuilder = {
-
     if (annotations.isDefined)
       annotations.get.addString(sb, "@", " @", " ")
 

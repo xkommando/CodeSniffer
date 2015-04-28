@@ -16,7 +16,7 @@ class Indexer[T: ClassTag] {
 
   private var index2ValMap = new Array[T](128)
 
-  def maxIndex = val2IndexMap.size
+  def maxIndex = val2IndexMap.size - 1
 
   def probe(value: T): Option[Int] = val2IndexMap.get(value)
 

@@ -20,6 +20,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>${acommon-math-version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.liftweb</groupId>
             <artifactId>lift-json_2.10</artifactId>
             <version>${lift-json-version}</version>

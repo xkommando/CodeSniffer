@@ -50,6 +50,8 @@
         <lift-json-version>2.5.1</lift-json-version>
         <gp-web-version>2.0</gp-web-version>
 
+        <acommon-math-version>3.2</acommon-math-version>
+
         <mvn-compile-plugin>2.3.2</mvn-compile-plugin>
         <mvn-surefire-plugin>2.18.1</mvn-surefire-plugin>
         <mvn-scala-plugin>2.15.2</mvn-scala-plugin>
