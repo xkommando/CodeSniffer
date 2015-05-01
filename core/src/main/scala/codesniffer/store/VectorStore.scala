@@ -11,7 +11,7 @@ class VectorStore {
 
   }
 
-  def persist(vec: CharacVec): Unit = {
+  def persist[T](vec: CharacVec[T]): Unit = {
 
   }
 }

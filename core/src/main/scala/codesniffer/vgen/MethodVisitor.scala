@@ -17,9 +17,10 @@ import scala.collection.convert.wrapAsScala._
  */
 class MethodVisitor extends VoidVisitorAdapter[Context] {
 
-  @BeanProperty var classVisitor: VoidVisitorAdapter[Context] = _
+  @BeanProperty var classVisitor: VoidVisitor[Context] = _
 
-  override def visit (method: MethodDeclaration, ctx: Context): Unit = {
+  override def visit (method: MethodDeclaration, ctx: Context): Unit =
+  if (!ctx.config.filterMethod(method)) {
     val modifiers = method.getModifiers
     if (!Modifier.isAbstract(modifiers) && !Modifier.isNative(modifiers)
       && method.getBody != null
@@ -32,8 +33,7 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
 
       val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method), None)
 
-      val stmts = method.getBody.getStmts
-      for (stmt <- stmts)
+      for (stmt <- method.getBody.getStmts)
         collectNode(stmt, vec)(ctx)
 
       ctx.vecWriter.write(vec)
@@ -43,40 +43,40 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
   }
 
   protected def collectNode(pnode: Node, vec: CharacVec[String])(implicit ctx: Context): Unit =
-    if (!ctx.config.NodeFilter(pnode)) {
+    if (!ctx.config.filterNode(pnode)) {
 
       // skip ExpressionStmt
-      val node = if (pnode.isInstanceOf[ExpressionStmt])
-        pnode.asInstanceOf[ExpressionStmt].getExpression
-      else pnode
+      val node = pnode match {
+        case stmt: ExpressionStmt => stmt.getExpression
+        case _ => pnode
+      }
 
-      if (node.isInstanceOf[ClassOrInterfaceDeclaration]
-          && !node.asInstanceOf[ClassOrInterfaceDeclaration].isInterface) {
+      node match {
+        case decl: ClassOrInterfaceDeclaration if !decl.isInterface =>
+          classVisitor.visit(decl, ctx)
+        case _ =>
 
-        classVisitor.visit(node.asInstanceOf[ClassOrInterfaceDeclaration], ctx)
+          //        case n: MethodCallExpr =>
+          //        case _ =>
+          //        node.getClass.getSimpleName
 
-      } else {
-//        case n: MethodCallExpr =>
-//        case _ =>
-//        node.getClass.getSimpleName
-        vec.put(findNodeName(node))
+          vec.put(findNodeName(node))
 
-        val children = node.getChildrenNodes
-        if (children != null && children.size() > 0) {
-          for (n <- children)
-            collectNode(n, vec)
-        }
+          val children = node.getChildrenNodes
+          if (children != null && children.size() > 0) {
+            for (n <- children)
+              collectNode(n, vec)
+          }
       }
     }
 
   protected def findNodeName(node: Node): String = node match {
     case a: BooleanLiteralExpr =>
-      if (node.asInstanceOf[BooleanLiteralExpr].getValue)
-          "__BOOL_TRUE___"
+      if (a.getValue) "__BOOL_TRUE___"
       else "__BOOL_FALSE___"
-    case a: PrimitiveType => a.asInstanceOf[PrimitiveType].getType.name()
-    case a: BinaryExpr => a.asInstanceOf[BinaryExpr].getOperator.name()
-    case a: UnaryExpr => a.asInstanceOf[UnaryExpr].getOperator.name()
+    case a: PrimitiveType => a.getType.name()
+    case a: BinaryExpr => a.getOperator.name()
+    case a: UnaryExpr => a.getOperator.name()
     case _ => node.getClass.getSimpleName
   }
 
@@ -101,9 +101,9 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
     case a : PrimitiveType => a.getType.name()
     case a : ReferenceType =>
       val name = extractTypeName(a.getType)
-      val arr = a.getArrayCount
-      if (arr == 0) name
-      else arr + "D-Array[" + name + "]"
+      val dim = a.getArrayCount
+      if (dim == 0) name
+      else dim + "D-Array[" + name + "]"
     case _ : VoidType => "void"
     case _ : WildcardType => "Wildcard"
     case _  => "UNK"

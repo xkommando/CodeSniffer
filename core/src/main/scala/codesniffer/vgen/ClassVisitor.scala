@@ -13,7 +13,8 @@ class ClassVisitor extends VoidVisitorAdapter[Context] {
   @BeanProperty var methodVisitor: VoidVisitor[Context] = _
 
   override def visit(klass: ClassOrInterfaceDeclaration, ctx: Context): Unit =
-    if (!klass.isInterface) {
+    if (!ctx.config.filterClass(klass)
+      && !klass.isInterface) {
 
       // update location
       val prevLoc = ctx.currentLocation

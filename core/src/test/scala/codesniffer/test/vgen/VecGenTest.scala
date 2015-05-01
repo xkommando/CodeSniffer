@@ -1,8 +1,13 @@
 package codesniffer.test.vgen
 
+import java.util
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import java.io.FileInputStream
 import java.lang.reflect.Modifier
+import java.util.TreeMap
 
+import scala.concurrent.duration._
 import codesniffer.core._
 import codesniffer.vgen.{Context, Config, ClassVisitor, MethodVisitor}
 import com.github.javaparser.{ASTParser, JavaParser}
@@ -13,6 +18,7 @@ import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclar
 import org.junit.Test
 import scala.collection.convert.wrapAsScala._
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent._
 import scala.util.Random
 
 /**
@@ -39,16 +45,29 @@ class VecGenTest {
     a.take(4).foreach(println)
 
     val rand = new Random()
-    val arr = (0 until 10).map(_=>rand.nextGaussian()).toArray
-    val arr2 = (0 until 5).map(_=>arr).toArray
+    val arr = (0 until 10).map(_ => rand.nextGaussian()).toArray
+    val arr2 = (0 until 5).map(_ => arr).toArray
     println(arr2)
 
     val a1 = Array(1, 2, 3, 4, 5)
     val a2 = Array(5, 4, 3, 2, 1)
     var sum = 0
-    for(i <- a1; j <- a2)
+    for (i <- a1; j <- a2)
       sum += i * j
     println(sum)
+
+    val vecCount = 10491
+    val procCount = 4
+
+    var right = vecCount
+    val dprocCount = procCount.toDouble
+    for(i <- 1 to procCount) {
+      var left = vecCount - (math.sqrt(i / dprocCount) * vecCount).toInt
+      for (j <- left until right) {
+      }
+      right = left
+    }
+
   }
 
   @Test
@@ -65,7 +84,7 @@ class VecGenTest {
     val scope = new PackageScope(pkgName)
     val ctx = new Context(new Config(), new Location("Src1.java", 0, scope), new Indexer, new MemWriter)
 //    val ctx = new Context(new Config(), new Location("AbstractAsyncTableRendering.java", 0, scope), new Indexer, new MemWriter)
-    ctx.config.NodeFilter = (node: Node)=> node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
+    ctx.config.filterNode = (node: Node)=> node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
 
     val mv = new MethodVisitor
     val cv = new ClassVisitor

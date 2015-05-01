@@ -17,27 +17,29 @@ class FileVisitor extends VoidVisitorAdapter[Context] {
   @BeanProperty var classVisitor: ClassVisitor = _
 
   override def visit(cu: CompilationUnit, ctx: Context): Unit = {
-
     // update location
     val pkgDec = cu.getPackage
-    val pkgName = if (pkgDec != null) {
-      val nameExp: NameExpr = cu.getPackage.getName
-      nameExp match {
-        case exp: QualifiedNameExpr => exp.getQualifier + "." + nameExp.getName
-        case _ => nameExp.getName
-      }
-    } else ""
+    if (!ctx.config.filterPackage(pkgDec)) {
+      
+      val pkgName = if (pkgDec != null) {
+        val nameExp = pkgDec.getName
+        nameExp match {
+          case exp: QualifiedNameExpr => exp.getQualifier + "." + exp.getName
+          case _ => nameExp.getName
+        }
+      } else ""
 
-    val nc = new PackageScope(pkgName)
-    val prevLoc = ctx.currentLocation
-    ctx.currentLocation = ctx.currentLocation.copy(scope = nc)
+      val nc = new PackageScope(pkgName)
+      val prevLoc = ctx.currentLocation
+      ctx.currentLocation = ctx.currentLocation.copy(scope = nc)
 
-    // search for methods
-    if (cu.getTypes != null && cu.getTypes.size() > 0)
-      for (klass <- cu.getTypes if klass.isInstanceOf[ClassOrInterfaceDeclaration])
-        classVisitor.visit(klass.asInstanceOf[ClassOrInterfaceDeclaration], ctx)
+      // search for methods
+      if (cu.getTypes != null && cu.getTypes.size() > 0)
+        for (klass <- cu.getTypes if klass.isInstanceOf[ClassOrInterfaceDeclaration])
+          classVisitor.visit(klass.asInstanceOf[ClassOrInterfaceDeclaration], ctx)
 
-    ctx.currentLocation = prevLoc
+      ctx.currentLocation = prevLoc
+    }
   }
 
 

@@ -31,11 +31,14 @@ case class CharacVec[T](indexer: Indexer[T],
 //  override def seq = vector
 
   lazy val intern: Array[Int] = {
-    val sz = indexer.maxIndex + 1
-    val arr = new Array[Int](sz)
+    val vecLen = vector.length
+    val validCount = indexer.maxIndex + 1
+    val sz = if (vecLen > validCount) validCount else vecLen
+    val arr = new Array[Int](validCount)
     System.arraycopy(vector, 0, arr, 0, sz)
     vector = arr
     vector
+
   }
 
   def length = indexer.maxIndex + 1
@@ -147,11 +150,10 @@ case class CharacVec[T](indexer: Indexer[T],
 
     def EuclideanDist(other: CharacVec[T]): Double = {
       if (other.indexer == indexer)
-        X.EuclideanDist(vector, other.vector, length)
+         X.EuclideanDist(intern, other.intern, length)
       else throw new IllegalArgumentException(
         s"Could not calculate Euclidean distance of two vectors in different coordinates: $this, \r\n$other")
     }
-
   }
 }
 //object CharacVec {
