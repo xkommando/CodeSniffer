@@ -61,7 +61,7 @@ case class Location(file: String, line: Int, scope: Scope) {
     copy(scope = new MethodScope(name, this.scope), line = ln)
 
 
-  override def toString = s"$file ln:$line $scope"
+  override def toString = s"$file ln:$line\t$scope"
 
 //  /**
 //   * pop tail and leave this scope
