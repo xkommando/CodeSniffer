@@ -8,9 +8,9 @@ object MethodDescriptor {
   val empty = new MethodDescriptor("UNK", None, None, None)
 }
 case class MethodDescriptor(typeName: String, // why not ref javaparser.Type? javaparser.Type is a node and may cause mem leak
-                           parameterTypes: Option[Seq[String]],
-                           annotations: Option[Seq[String]],
-                           throws: Option[Seq[String]]
+                           parameterTypes: Option[Set[String]],
+                           annotations: Option[Set[String]],
+                           throws: Option[Set[String]]
                             ) {
 
   def appendTo(sb: StringBuilder): StringBuilder = {

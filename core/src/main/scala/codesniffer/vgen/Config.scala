@@ -15,6 +15,8 @@ class Config {
 
   private def NOP[T](p:T):Boolean = false
 
+//  var scanRecursively: Boolean = true
+
   var filterFile: File=>Boolean = NOP[File]
   var filterFileName: String=>Boolean = NOP[String]
   var filterPackage: PackageDeclaration => Boolean = NOP[PackageDeclaration]

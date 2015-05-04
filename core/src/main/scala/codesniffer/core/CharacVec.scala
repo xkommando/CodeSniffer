@@ -38,7 +38,6 @@ case class CharacVec[T](indexer: Indexer[T],
     System.arraycopy(vector, 0, arr, 0, sz)
     vector = arr
     vector
-
   }
 
   def length = indexer.maxIndex + 1
@@ -46,14 +45,14 @@ case class CharacVec[T](indexer: Indexer[T],
   def apply(index: Int): Int = vector(index)
 
   def apply(name: T): Int = {
-    val optIdx = indexer.probe(name)
+    val optIdx = indexer(name)
     if (optIdx.isDefined && optIdx.get < vector.length)
       vector(optIdx.get)
     else throw new NoSuchElementException(name.toString)
   }
 
   def get(name: T): Option[Int] = {
-    val optIdx = indexer.probe(name)
+    val optIdx = indexer(name)
     if (optIdx.isDefined && optIdx.get < vector.length)
       Some(vector(optIdx.get))
     else None
@@ -75,7 +74,7 @@ case class CharacVec[T](indexer: Indexer[T],
   }
 
   def remove(name: T, weight: Int  = 1): Int = {
-    val optIdx = indexer.probe(name)
+    val optIdx = indexer(name)
     if (optIdx.isDefined && optIdx.get < vector.length) {
       vector(optIdx.get) -= weight
       _count -= weight
@@ -84,7 +83,7 @@ case class CharacVec[T](indexer: Indexer[T],
   }
 
   def update(name: T, weight: Int): Int = {
-    val optIdx = indexer.probe(name)
+    val optIdx = indexer(name)
     if (optIdx.isDefined && optIdx.get < vector.length) {
       vector(optIdx.get) -= weight
       _count = weight

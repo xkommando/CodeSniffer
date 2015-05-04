@@ -20,6 +20,9 @@ class Indexer[T: ClassTag] {
 
   def probe(value: T): Option[Int] = val2IndexMap.get(value)
 
+  def apply(value: T): Option[Int] = probe(value)
+  def apply(idx: Int): Option[T] = valueAt(idx)
+
   /**
    *
    * @param value

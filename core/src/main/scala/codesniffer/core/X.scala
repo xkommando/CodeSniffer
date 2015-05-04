@@ -1,7 +1,12 @@
 package codesniffer.core
 
+import java.util
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+
 import codesniffer.hash.{D, Session}
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 

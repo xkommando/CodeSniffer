@@ -20,9 +20,12 @@ import scala.util.{Failure, Success}
  */
 object MainScript {
 
+  // to a directory, or a single source file
+  //  val path = "D:\\__jvm\\spring-framework-master"
+  //  val path = "D:\\__jvm\\cache\\ehcache-2.7.5"
+  //  val path = "D:\\__jvm\\spring-framework-master\\spring-framework-master\\spring-jdbc"
+
   def main(args: Array[String]): Unit = {
-    //---------------------------------------------------------------------------
-    //    config
 
     var resultSize = -1
     var path: String = null
@@ -35,98 +38,41 @@ object MainScript {
       sys.exit(1)
     }
 
-    // to a directory, or a single source file
-    //  val path = "D:\\__jvm\\spring-framework-master"
-    //  val path = "D:\\__jvm\\cache\\ehcache-2.7.5"
-    //  val path = "D:\\__jvm\\spring-framework-master\\spring-framework-master\\spring-jdbc"
-    /** **************************************************************************
-      * initialize
-      */
-
-    val mv = new MethodVisitor
-    val cv = new ClassVisitor
-    val fv = new FileVisitor
-
-    // assemble visitors
-    cv.setMethodVisitor(mv)
-    mv.setClassVisitor(cv)
-    fv.setClassVisitor(cv)
-
-    // vectors generated will be collected to this one
-    val vecCollector = new MemWriter
-    //  {
-    //    override def write[T: ClassTag] (vec: CharacVec[T]): Unit = {
-    //      super.+=(vec)
-    //      println("Visited: " + vec.location)
-    //    }
-    //  }
-
-    val ctx = new Context(new Config, null, new Indexer[String], vecCollector)
+    val dir = new File(path)
+    require(dir.exists() && dir.canRead)
     // filter out:
     // package file
     // test classes
     // meaningless statements
-    ctx.config.filterFileName = (name: String) => (
+    val config = new Config
+    config.filterFileName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
       )
-    ctx.config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
+    config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
 
-    val handleFile = (src: File) => {
-      require(src.isFile)
-      if (!ctx.config.filterFile(src)) {
-        // update location
-        val fileName = src.getPath.substring(path.length - 1)
-        ctx.currentLocation = new Location(fileName, 0, null)
+    val scanner = new SrcScanner(path, config)
 
-        val stream = new FileInputStream(src)
-        val cu = JavaParser.parse(stream, "UTF-8", false)
-
-        // search for class definition
-        fv.visit(cu, ctx)
-        stream.close()
-      }
-    }
-
-    def handleDir(dir: File): Unit = {
-      require(dir.isDirectory)
-
-      for (sub <- dir.listFiles(new FilenameFilter {
-        override def accept(dir: File, name: String): Boolean = !ctx.config.filterFileName(name)
-      })) sub match {
-        case subDir if subDir.isDirectory => handleDir(subDir)
-        case src if src.isFile =>
-          if (src.getName.endsWith(".java"))
-            handleFile(src)
-        //      case _ => throw new RuntimeException(s"UNK file, $sub in $dir")
-      }
-    }
-
-    /** **************************************************************************
-      * kick off
-      */
-
-    val dir = new File(path)
-    require(dir.exists() && dir.canRead)
     dir match {
-      case subDir if subDir.isDirectory => handleDir(subDir)
-      case src if src.isFile => handleFile(src)
+      case where if where.isDirectory => scanner.scanDir(where, recursive = true)
+      case src if src.isFile => scanner.scanFile(src)
     }
 
     /** **************************************************************************
       * search for similar methods
       */
+    val vecCollector = scanner.vecCollector
     val vecCount = vecCollector.length
-    println(vecCount + " Vectors generated")
+    println(vecCount + " vectors generated")
 
     type SortedList = util.TreeMap[Double, (CharacVec[_], CharacVec[_])]
 
     val procCount = Runtime.getRuntime.availableProcessors()
 
     // forkjoin out performs threadpool
-    import ExecutionContext.Implicits.global
+    //    import ExecutionContext.Implicits.global
     // old threadpool
-//    implicit val exe = ExecutionContext.fromExecutor(java.util.concurrent.Executors.newFixedThreadPool(procCount)).prepare()
+    implicit val exe = ExecutionContext.fromExecutor(java.util.concurrent.Executors.newFixedThreadPool(procCount)).prepare()
 
     val partResultSize = vecCount / 80 / procCount
     println(s"Searching for code pairs with $procCount threads")
@@ -166,12 +112,13 @@ object MainScript {
           rs
         }
         while (result.size() > resultSize * 1.2) result.pollLastEntry()
+        if (result.firstKey() < 0.001) result.pollFirstEntry()
+
         val t2 = System.currentTimeMillis()
 
         /** **************************************************************************
           * report
           */
-
         println(s"find ${result.size()} clone pair, time ${t2 - t1}")
         for ((dist, pair) <- result) {
           println(s" distance $dist :(node count: ${pair._1.count}, node count ${pair._2.count})\r\n${pair._1.location}\r\n${pair._2.location}")
@@ -180,7 +127,6 @@ object MainScript {
         println(s"Search failed, error:$t")
     }
 
-//    _es.awaitTermination(10, TimeUnit.MINUTES)
     //    single thread version
 
     //  val result = new SortedList()

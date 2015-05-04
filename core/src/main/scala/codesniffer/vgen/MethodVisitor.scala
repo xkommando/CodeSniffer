@@ -1,9 +1,9 @@
 package codesniffer.vgen
 
 import java.lang.reflect.Modifier
-import java.util.Collections
 
 import codesniffer.core._
+import codesniffer.search.NodeCount
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.`type`._
 import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
@@ -19,6 +19,10 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
 
   @BeanProperty var classVisitor: VoidVisitor[Context] = _
 
+  import FileVisitor.NOP
+  var before = NOP[MethodDeclaration]
+  var after = NOP[MethodDeclaration]
+
   override def visit (method: MethodDeclaration, ctx: Context): Unit =
   if (!ctx.config.filterMethod(method)) {
     val modifiers = method.getModifiers
@@ -26,10 +30,12 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
       && method.getBody != null
       && method.getBody.getStmts != null && method.getBody.getStmts.size() > 0) {
 
+
       val methodName = method.getName
 
       val prevLoc = ctx.currentLocation
       ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
+      before(method, ctx)
 
       val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method), None)
 
@@ -37,6 +43,8 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
         collectNode(stmt, vec)(ctx)
 
       ctx.vecWriter.write(vec)
+
+      after(method, ctx)
 
       ctx.currentLocation = prevLoc
     }
@@ -55,13 +63,10 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
         case decl: ClassOrInterfaceDeclaration if !decl.isInterface =>
           classVisitor.visit(decl, ctx)
         case _ =>
-
           //        case n: MethodCallExpr =>
           //        case _ =>
           //        node.getClass.getSimpleName
-
           vec.put(findNodeName(node))
-
           val children = node.getChildrenNodes
           if (children != null && children.size() > 0) {
             for (n <- children)
@@ -83,11 +88,11 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
   protected def extractSignature(m: MethodDeclaration): MethodDescriptor = {
 
     val paramTypeNames = if (null == m.getParameters || m.getParameters.size() == 0) None
-      else Some(m.getParameters.map{p=>extractTypeName(p.getType)}.toSeq)
+      else Some(m.getParameters.map{p=>extractTypeName(p.getType)}.toSet)
     val annotationNames = if (null == m.getAnnotations || m.getAnnotations.size() == 0) None
-      else Some(m.getAnnotations.map(_.getName.getName).toSeq)
+      else Some(m.getAnnotations.map(_.getName.getName).toSet)
     val throwNames = if (null == m.getThrows || m.getThrows.size() == 0) None
-      else Some(m.getThrows.map(_.getName).toSeq)
+      else Some(m.getThrows.map(_.getName).toSet)
 
     new MethodDescriptor(extractTypeName(m.getType),
                         paramTypeNames,

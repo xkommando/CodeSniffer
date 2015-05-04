@@ -12,6 +12,10 @@ class ClassVisitor extends VoidVisitorAdapter[Context] {
 
   @BeanProperty var methodVisitor: VoidVisitor[Context] = _
 
+  import FileVisitor.NOP
+  var before  = NOP[ClassOrInterfaceDeclaration]
+  var after = NOP[ClassOrInterfaceDeclaration]
+
   override def visit(klass: ClassOrInterfaceDeclaration, ctx: Context): Unit =
     if (!ctx.config.filterClass(klass)
       && !klass.isInterface) {
@@ -19,6 +23,7 @@ class ClassVisitor extends VoidVisitorAdapter[Context] {
       // update location
       val prevLoc = ctx.currentLocation
       ctx.currentLocation = ctx.currentLocation.enterClass(klass.getName, klass.getBeginLine)
+      before(klass, ctx)
 
       for (member <- klass.getMembers) member match {
         case method: MethodDeclaration => methodVisitor.visit(method, ctx)
@@ -26,6 +31,7 @@ class ClassVisitor extends VoidVisitorAdapter[Context] {
         case _ =>
       }
 
+      after(klass, ctx)
       // leave this class scope
       ctx.currentLocation = prevLoc
     }
