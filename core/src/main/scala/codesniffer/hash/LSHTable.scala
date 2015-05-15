@@ -1,13 +1,13 @@
 package codesniffer.hash
 
 
-import codesniffer.core.{CharacVec, X}
+import codesniffer.core.{CharacVec, MathUtils}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.util.Random
-import X.applyConversion
+import MathUtils.applyConversion
 
 /**
  * Created by Bowen Cai on 4/25/2015.
@@ -80,13 +80,13 @@ class LSHTable(val param: HashParam, val random: Random, nPointsEstimate: Int) {
         _pointULSHVecs(i)(j) = computeULSH(_reducedPoint, pULSHVecs(i)(j))
       }
       _precomputedHashesOfULSHs(i)(0) =
-        X.computeProductModePrime(_hashedBuckets(0).mainHashA, _pointULSHVecs(i), hfTupleLen)
+        MathUtils.computeProductModePrime(_hashedBuckets(0).mainHashA, _pointULSHVecs(i), hfTupleLen)
       _precomputedHashesOfULSHs(i)(0) =
-        X.computeProductModePrime(_hashedBuckets(0).controlHash1, _pointULSHVecs(i), hfTupleLen)
+        MathUtils.computeProductModePrime(_hashedBuckets(0).controlHash1, _pointULSHVecs(i), hfTupleLen)
       _precomputedHashesOfULSHs(i)(0) =
-        X.computeProductModePrime(_hashedBuckets(0).mainHashA.drop(hfTupleLen), _pointULSHVecs(i), hfTupleLen)
+        MathUtils.computeProductModePrime(_hashedBuckets(0).mainHashA.drop(hfTupleLen), _pointULSHVecs(i), hfTupleLen)
       _precomputedHashesOfULSHs(i)(0) =
-        X.computeProductModePrime(_hashedBuckets(0).controlHash1.drop(hfTupleLen), _pointULSHVecs(i), hfTupleLen)
+        MathUtils.computeProductModePrime(_hashedBuckets(0).controlHash1.drop(hfTupleLen), _pointULSHVecs(i), hfTupleLen)
     }
   }
 

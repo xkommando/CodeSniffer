@@ -1,34 +1,44 @@
 package codesniffer.core
 
-import java.util
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
-
 import codesniffer.hash.{D, Session}
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 /**
  * Created by Bowen Cai on 4/25/2015.
  */
-object X {
-
-  import StrictMath._
+object MathUtils {
 
   import MathDef._
   import org.apache.commons.math3.special._
 
   @inline
-  def EuclideanDist(arr1: Array[Int], arr2: Array[Int], length: Int): Double = {
+  def EuclideanDist[T:Numeric](arr1: Array[T], arr2: Array[T], length: Int): Double = {
     var sum = 0.0
     for (i <- 0 until length) {
       val p = arr1(i)
-      val dist = arr2(i) - p
+      val dist =  implicitly[Numeric[T]] toDouble  (implicitly[Numeric[T]] minus (arr2(i), p))
       sum += dist * dist
     }
-    java.lang.Math.sqrt(sum)
+    StrictMath.sqrt(sum)
+  }
+
+  @inline
+  def CosineDist[T:Numeric](arr1: Array[T], arr2: Array[T], length: Int): Double = {
+    var sum1 = 0.0
+    var sum2 = 0.0
+    var prodsum = 0.0
+    for (i <- 0 until length) {
+      val p1 = implicitly[Numeric[T]] toDouble arr1(i)
+      sum1 += p1 * p1
+      val p2 = implicitly[Numeric[T]] toDouble arr2(i)
+      sum2 += p2 * p2
+      prodsum += p1 * p2
+    }
+    val sqs1 = StrictMath.sqrt(sum1)
+    val sqs2 = StrictMath.sqrt(sum2)
+    prodsum / sqs1 / sqs2
   }
 
 //  RealT computeFunctionP(RealT w, RealT c) {
@@ -39,7 +49,7 @@ object X {
     val x = w / c
     val _1 = Erf.erfc( x / M_SQRT2)
     val _2 = M_2_SQRTPI / M_SQRT2 / x
-    val _3 = 1 - exp( - x * x/ 2 )
+    val _3 = 1 - StrictMath.exp( - x * x/ 2 )
     1 - _1 - _2 * _3
   }
 
@@ -54,8 +64,10 @@ object X {
   //    m++;
   //  }
   //  return m;
+
   @inline
   def computeMfromK_P(k: Int, successProb: Double): Int = {
+    import StrictMath._
     val mu = 1 - pow(computeP(D.W_default, 1), k / 2)
     val p = successProb
     val d = (1 - mu) / (1 - p) * 1 / log(1 / mu) * pow(mu, -1 / (1 - mu))
@@ -117,7 +129,7 @@ object X {
 
   import scala.language.implicitConversions
 
-  implicit def applyConversion(r: Random) = new RandomExt(r.self)
+  implicit def applyConversion(r: Random): RandomExt = new RandomExt(r.self)
 
 
 }

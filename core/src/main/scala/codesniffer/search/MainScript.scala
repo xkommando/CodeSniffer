@@ -37,7 +37,9 @@ object MainScript {
       println("Usage: <path to source directory> <expected result size>")
       sys.exit(1)
     }
-
+    /** **************************************************************************
+      *  prepare
+      */
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
     // filter out:
@@ -50,20 +52,22 @@ object MainScript {
         || name.endsWith("Tests.java") // filter out test file
       )
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
-
-    val scanner = new SrcScanner(path, config)
-
+    val vecCollector = new MemWriter
+    val scanner = new SrcScanner(new Context(config, null, new Indexer[String], vecCollector))
+    /** **************************************************************************
+      *  generate vectors
+      */
+    val tv1 = System.currentTimeMillis()
     dir match {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
       case src if src.isFile => scanner.scanFile(src)
     }
-
+    val tv2 = System.currentTimeMillis()
     /** **************************************************************************
       * search for similar methods
       */
-    val vecCollector = scanner.vecCollector
     val vecCount = vecCollector.length
-    println(vecCount + " vectors generated")
+    println(s"$vecCount vectors generated, time ${tv2 - tv1} ms")
 
     type SortedList = util.TreeMap[Double, (CharacVec[_], CharacVec[_])]
 
@@ -74,7 +78,7 @@ object MainScript {
     // old threadpool
     implicit val exe = ExecutionContext.fromExecutor(java.util.concurrent.Executors.newFixedThreadPool(procCount)).prepare()
 
-    val partResultSize = vecCount / 80 / procCount
+    val partResultSize = vecCount / procCount // expected result size of each worker
     println(s"Searching for code pairs with $procCount threads")
 
     val t1 = System.currentTimeMillis()
@@ -83,7 +87,7 @@ object MainScript {
     val dprocCount = procCount.toDouble
     val tasks = for (i <- 1 to procCount) yield future[SortedList] {
       val sortedList = new SortedList()
-      // assign task to each thread with average workload
+      // assign task to each worker with average workload
       val left = vecCount - (math.sqrt(i / dprocCount) * vecCount).toInt
       for (j <- left until right) {
         for (k <- (i + 1) until vecCount) {
@@ -91,16 +95,22 @@ object MainScript {
           val ac = a.count
           val b = vecCollector(k).asInstanceOf[CharacVec[String]]
           val bc = b.count
-          if (ac > 20 && bc > 20 && math.abs(ac - bc) < 50) {
+          if (ac > 20 && bc > 20 && math.abs(ac - bc) < 60) { // this could significantly reduce comparison
+//            val dist = a.dist2(b)
             val dist = a.math.EuclideanDist(b)
-            if (dist < 15)
+            if (dist < 20)
               sortedList.put(dist, (a, b))
+
+//            val dist = a.math.CosineDist(b)
+//            if (dist < 0.01)
+//              sortedList.put(dist, (a, b))
+
           }
         }
-        // chop redundant data
+        // chop off redundant data
         while (sortedList.size() > partResultSize) sortedList.pollLastEntry()
       }
-      println(s"vectors from $left until $right searched")
+      println(s"vectors from $left to $right searched")
       right = left
       sortedList
     }
@@ -112,16 +122,18 @@ object MainScript {
           rs
         }
         while (result.size() > resultSize * 1.2) result.pollLastEntry()
-        if (result.firstKey() < 0.001) result.pollFirstEntry()
+        if (result.firstKey() < 0.001) result.pollFirstEntry() // pop a singlar false positive
 
         val t2 = System.currentTimeMillis()
 
         /** **************************************************************************
           * report
           */
-        println(s"find ${result.size()} clone pair, time ${t2 - t1}")
+        println(s"find ${result.size()} clone pair, time ${t2 - t1} ms")
+        var i = 0
         for ((dist, pair) <- result) {
-          println(s" distance $dist :(node count: ${pair._1.count}, node count ${pair._2.count})\r\n${pair._1.location}\r\n${pair._2.location}")
+          println(s"Rank $i distance $dist :(node count: ${pair._1.count}, node count ${pair._2.count})\r\n${pair._1.location}\r\n${pair._2.location}\r\n")
+          i += 1
         }
       case Failure(t) =>
         println(s"Search failed, error:$t")

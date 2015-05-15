@@ -2,10 +2,8 @@ package codesniffer.vgen
 
 import java.io.File
 
-import com.github.javaparser.ast.{PackageDeclaration, Node}
-import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclaration}
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.stmt.Statement
+import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
+import com.github.javaparser.ast.{Node, PackageDeclaration}
 
 
 /**
@@ -24,7 +22,7 @@ class Config {
   var filterMethod: MethodDeclaration => Boolean = NOP[MethodDeclaration]
 
   var filterNode: Node => Boolean = NOP[Node]
-  var filterStmt: Statement => Boolean = NOP[Statement]
-  var filterExpr: Expression => Boolean = NOP[Expression]
+//  var filterStmt: Statement => Boolean = NOP[Statement]
+//  var filterExpr: Expression => Boolean = NOP[Expression]
 
 }

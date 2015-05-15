@@ -2,27 +2,29 @@ package codesniffer.core
 
 import codesniffer.core.CharacVec.MethodCall
 
+import scala.collection.mutable.ArrayBuffer
 
 
-object CharacVec {
-  type MethodCall = (String, String)
-}
 /**
  *
  * @tparam T dimension type
  *
  * Created by Bowen Cai on 4/10/2015.
  */
+object CharacVec {
+  type MethodCall = (String, String)
+}
 case class CharacVec[T](indexer: Indexer[T],
                     location: Location,
                     methodName: String,
-                    descriptor: MethodDescriptor, // TODO: integrate with symbol table
-                    calls: Option[Seq[MethodCall]]
-                      ) {//extends IndexedSeq[Int] with IndexedSeqLike[Int, CharacVec[T]] {
+                    descriptor: MethodDescriptor // TODO: integrate with symbol table
+                    ) {//extends IndexedSeq[Int] with IndexedSeqLike[Int, CharacVec[T]] {
 
+  var data: Option[AnyRef] = None
 
   var id = -1
   private var vector: Array[Int] = new Array[Int](64)
+  val calls = new ArrayBuffer[MethodCall]
   private[this] var _count = 0
 
 
@@ -33,10 +35,12 @@ case class CharacVec[T](indexer: Indexer[T],
   lazy val intern: Array[Int] = {
     val vecLen = vector.length
     val validCount = indexer.maxIndex + 1
-    val sz = if (vecLen > validCount) validCount else vecLen
-    val arr = new Array[Int](validCount)
-    System.arraycopy(vector, 0, arr, 0, sz)
-    vector = arr
+    if (validNodeTypeCount != vecLen) {
+      val sz = if (vecLen > validCount) validCount else vecLen
+      val arr = new Array[Int](validCount)
+      System.arraycopy(vector, 0, arr, 0, sz)
+      vector = arr
+    }
     vector
   }
 
@@ -57,7 +61,6 @@ case class CharacVec[T](indexer: Indexer[T],
       Some(vector(optIdx.get))
     else None
   }
-  
 
   /**
    *
@@ -71,6 +74,11 @@ case class CharacVec[T](indexer: Indexer[T],
     vector(idx) += weight
     _count += weight
     _count
+  }
+
+  def +=(name: T, weight: Int  = 1): this.type = {
+    put(name, weight)
+    this
   }
 
   def remove(name: T, weight: Int  = 1): Int = {
@@ -145,14 +153,30 @@ case class CharacVec[T](indexer: Indexer[T],
       sb.toString()
     }
 
+  def dist2[A](other: CharacVec[A]): Double = {
+    if (other.indexer == indexer) {
+      descriptor.distance(other.descriptor)
+      +MathUtils.EuclideanDist(intern, other.intern, length)
+    } else throw new IllegalArgumentException(
+      s"Could not calculate Euclidean distance of two vectors in different coordinates: \r\n$this, \r\n$other")
+  }
+
   object math {
 
-    def EuclideanDist(other: CharacVec[T]): Double = {
+    def EuclideanDist[A](other: CharacVec[A]): Double = {
       if (other.indexer == indexer)
-         X.EuclideanDist(intern, other.intern, length)
+         MathUtils.EuclideanDist(intern, other.intern, length)
       else throw new IllegalArgumentException(
-        s"Could not calculate Euclidean distance of two vectors in different coordinates: $this, \r\n$other")
+        s"Could not calculate Euclidean distance of two vectors in different coordinates: \r\n$this, \r\n$other")
     }
+
+    def CosineDist[A](other: CharacVec[A]): Double = {
+      if (other.indexer == indexer)
+        MathUtils.CosineDist(intern, other.intern, length)
+      else throw new IllegalArgumentException(
+        s"Could not calculate Cosine distance of two vectors in different coordinates: \r\n$this, \r\n$other")
+    }
+
   }
 }
 //object CharacVec {

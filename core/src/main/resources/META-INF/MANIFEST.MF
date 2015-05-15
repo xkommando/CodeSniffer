@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: codesniffer.search.MainScript
+Main-Class: codesniffer.search.CrossMatch
 

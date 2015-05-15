@@ -1,5 +1,7 @@
 package codesniffer.core
 
+import java.util
+
 import scala.StringBuilder
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -87,6 +89,15 @@ class Indexer[T: ClassTag] {
   def appendTo(sb: mutable.StringBuilder): mutable.StringBuilder = index2ValMap.take(val2IndexMap.size).addString(sb, " ")
   override def toString = appendTo(new StringBuilder(val2IndexMap.size * 15)).toString()
 
+
+  override def hashCode(): Int = {
+    var result = 1
+    for (i <- 0 to maxIndex) {
+      val e = index2ValMap(i)
+      result = 31 * result + (if (e == null) 0 else e.hashCode)
+    }
+    result
+  }
 
   override def equals(o: Any): Boolean = o match {
     case other: Indexer[T] =>

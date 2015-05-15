@@ -8,7 +8,7 @@ import com.github.javaparser.JavaParser
 /**
  * Created by Bowen Cai on 5/1/2015.
  */
-class SrcScanner(path: String, cfg: Config) {
+class SrcScanner(val context: Context) {
 
   val methodVisitor = new MethodVisitor
   val classVisitor = new ClassVisitor
@@ -19,23 +19,19 @@ class SrcScanner(path: String, cfg: Config) {
   methodVisitor.setClassVisitor(classVisitor)
   fileVisitor.setClassVisitor(classVisitor)
 
-  // vectors generated will be collected to this one
-  val vecCollector = new MemWriter
-
-  val ctx = new Context(cfg, null, new Indexer[String], vecCollector)
-
   def scanFile(src: File): Unit = {
     require(src.isFile)
-    if (!ctx.config.filterFile(src)) {
+    if (!context.config.filterFile(src)) {
       // update location
-      val fileName = src.getPath.substring(path.length - 1)
-      ctx.currentLocation = new Location(fileName, 0, null)
+      val fileName = src.getName //.substring(path.length - 1)
+      context.currentLocation = new Location(fileName, 0, null)
 
       val stream = new FileInputStream(src)
+//      println(fileName)
       val cu = JavaParser.parse(stream, "UTF-8", false)
 
       // search for class definition
-      fileVisitor.visit(cu, ctx)
+      fileVisitor.visit(cu, context)
       stream.close()
     }
   }
@@ -44,7 +40,7 @@ class SrcScanner(path: String, cfg: Config) {
     require(dir.isDirectory)
 
     for (sub <- dir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = !ctx.config.filterFileName(name)
+      override def accept(dir: File, name: String): Boolean = !context.config.filterFileName(name)
     })) sub match {
       case subDir if subDir.isDirectory =>
         if (recursive)

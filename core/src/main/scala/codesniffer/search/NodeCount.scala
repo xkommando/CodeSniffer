@@ -4,7 +4,7 @@ import java.io.File
 import java.util
 import java.util.concurrent.atomic.{AtomicReference, AtomicInteger, AtomicLong}
 
-import codesniffer.core.Location
+import codesniffer.core.{CharacVec, MemWriter, Indexer, Location}
 import codesniffer.vgen.{Context, SrcScanner, Config}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
@@ -31,14 +31,16 @@ object NodeCount {
 
   def main(args: Array[String]): Unit = {
 
-    var path: String = null
-    if (args != null && args.length == 1) {
-      path = args(0)
-      println(s"Scanning directory $path")
-    } else {
-      println("Usage: <path to source directory>")
-      sys.exit(1)
-    }
+//    var path = "D:\\__TEMP__\\src\\Src1.java"
+    var path: String = "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19"
+    //    var path: String = _
+//    if (args != null && args.length == 1) {
+//      path = args(0)
+//      println(s"Scanning directory $path")
+//    } else {
+//      println("Usage: <path to source directory>")
+//      sys.exit(1)
+//    }
 
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
@@ -53,9 +55,10 @@ object NodeCount {
       )
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
 
-    val scanner = new SrcScanner(path, config)
+    val vecCollector = new MemWriter
+    val scanner = new SrcScanner(new Context(config, null, new Indexer[String], vecCollector))
 
-    scanner.methodVisitor.before = (method: MethodDeclaration, c: Context)=> {
+    scanner.methodVisitor.before = (method: MethodDeclaration, v: CharacVec[_], c: Context)=> {
       methodCount.incrementAndGet()
       val _stmtNum = method.getBody.getStmts.size()
       topStmtCount.addAndGet(_stmtNum)
@@ -64,8 +67,7 @@ object NodeCount {
         stmtGrp.update(_stmtNum, old + 1)
       }
     }
-    scanner.methodVisitor.after = (method: MethodDeclaration, c: Context)=> {
-      val last = scanner.vecCollector.last
+    scanner.methodVisitor.after = (method: MethodDeclaration, last: CharacVec[_], c: Context)=> {
       val c = last.count
       nodeCount.addAndGet(c)
       nodeGrp.synchronized{
@@ -76,6 +78,7 @@ object NodeCount {
         maxNodeNumber.set(c)
         maxNodeLoc.set(last.location)
       }
+      vecCollector.clear()
     }
 
     dir match {

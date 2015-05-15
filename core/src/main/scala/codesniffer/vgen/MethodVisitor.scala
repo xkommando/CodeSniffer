@@ -19,9 +19,9 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
 
   @BeanProperty var classVisitor: VoidVisitor[Context] = _
 
-  import FileVisitor.NOP
-  var before = NOP[MethodDeclaration]
-  var after = NOP[MethodDeclaration]
+  val NOP = (m: MethodDeclaration, v: CharacVec[_], ctx: Context)=>{}
+  var before = NOP
+  var after = NOP
 
   override def visit (method: MethodDeclaration, ctx: Context): Unit =
   if (!ctx.config.filterMethod(method)) {
@@ -30,22 +30,19 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
       && method.getBody != null
       && method.getBody.getStmts != null && method.getBody.getStmts.size() > 0) {
 
-
       val methodName = method.getName
 
       val prevLoc = ctx.currentLocation
       ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
-      before(method, ctx)
-
-      val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method), None)
+      val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method))
+      before(method, vec, ctx)
 
       for (stmt <- method.getBody.getStmts)
         collectNode(stmt, vec)(ctx)
 
       ctx.vecWriter.write(vec)
 
-      after(method, ctx)
-
+      after(method, vec, ctx)
       ctx.currentLocation = prevLoc
     }
   }
@@ -62,10 +59,13 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
       node match {
         case decl: ClassOrInterfaceDeclaration if !decl.isInterface =>
           classVisitor.visit(decl, ctx)
+        case call: MethodCallExpr =>
+          vec.put("MethodCallExpr")
+          val scope = findCallee(call.getScope)
+          val methodName = call.getName
+//          val lsExps = call.getArgs
+          vec.calls += (scope -> methodName)
         case _ =>
-          //        case n: MethodCallExpr =>
-          //        case _ =>
-          //        node.getClass.getSimpleName
           vec.put(findNodeName(node))
           val children = node.getChildrenNodes
           if (children != null && children.size() > 0) {
@@ -74,6 +74,29 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
           }
       }
     }
+
+  protected def findCallee(exp: Expression): String = exp match {
+    case fa: FieldAccessExpr => fa.getScope + "." + fa.getField
+    case nm: NameExpr => nm.getName
+    case t: ThisExpr => "this"
+    case null => "this"
+    case s: SuperExpr => "super"
+    case mc: MethodCallExpr => findCallee(mc.getScope) + "." + mc.getName // actually we need the return type
+    case pt: EnclosedExpr => findCallee(pt.getInner)
+    case klass: ClassExpr => extractTypeName(klass.getType) + ".class"
+    case cst: CastExpr => extractTypeName(cst.getType)
+    case str: StringLiteralExpr => "String"
+    case arr: ArrayAccessExpr => findCallee(arr.getName)
+    case nobj: ObjectCreationExpr => extractTypeName(nobj.getType)
+    case cnd: ConditionalExpr => findCallee(cnd.getThenExpr)
+    case as: AssignExpr => findCallee(as.getTarget)
+    case bin: BinaryExpr => findCallee(bin.getLeft)
+    case a =>
+      println(s"========================================\r\n"
+        + s"${a.getParentNode}\r\n$a\r\n${a.getParentNode.getParentNode}\r\n${a.getClass}"
+        + s"\r\n===============================")
+      "UNK"
+  }
 
   protected def findNodeName(node: Node): String = node match {
     case a: BooleanLiteralExpr =>
@@ -94,10 +117,12 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
     val throwNames = if (null == m.getThrows || m.getThrows.size() == 0) None
       else Some(m.getThrows.map(_.getName).toSet)
 
-    new MethodDescriptor(extractTypeName(m.getType),
+    new MethodDescriptor(m.getModifiers,
+                        extractTypeName(m.getType),
                         paramTypeNames,
                         annotationNames,
                         throwNames)
+
   }
 
   protected def extractTypeName(tp: Type): String = tp match {
