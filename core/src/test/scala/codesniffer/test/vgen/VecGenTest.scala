@@ -3,16 +3,16 @@ package codesniffer.test.vgen
 import java.util
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import java.io.FileInputStream
+import java.io.{File, FileInputStream}
 import java.lang.reflect.Modifier
 import java.util.TreeMap
 
 import scala.concurrent.duration._
 import codesniffer.core._
-import codesniffer.vgen.{Context, Config, ClassVisitor, MethodVisitor}
+import codesniffer.vgen._
 import com.github.javaparser.{ASTParser, JavaParser}
 import com.github.javaparser.ast.expr.{QualifiedNameExpr, ThisExpr}
-import com.github.javaparser.ast.stmt.EmptyStmt
+import com.github.javaparser.ast.stmt.{SynchronizedStmt, EmptyStmt}
 import com.github.javaparser.ast.{Node, CompilationUnit}
 import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclaration}
 import org.junit.Test
@@ -25,6 +25,40 @@ import scala.util.Random
  * Created by Bowen Cai on 4/13/2015.
  */
 class VecGenTest {
+
+
+  @Test
+  def t_filter_locks: Unit = {
+    val path = "E:\\Dev\\scala\\TestScala\\src\\main\\java\\testsrc\\Src3.java"
+    val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr] || node.isInstanceOf[SynchronizedStmt]
+    val _libConfig = new Config
+    _libConfig.filterFileName = (name: String) => (
+      name.equals("package-info.java") // filter out package file
+        || name.endsWith("Test.java") // filter out test file
+      )
+    _libConfig.filterNode = _nodeFilter
+
+    val vecs = vgen(path, new Indexer[String], _libConfig)
+    println(vecs(0).indexer)
+    vecs.foreach(println)
+  }
+
+  def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter = {
+    val dir = new File(path)
+    require(dir.exists() && dir.canRead)
+
+    val vs1 = new MemWriter
+    val scanner1 = new SrcScanner(new Context(cfg, null, idx, vs1))
+    // save exact source to vector, for manually check
+    scanner1.methodVisitor.before =
+      (m: MethodDeclaration, v: CharacVec[_], ctx: Context)=> v.data = Some(m.toString)
+
+    dir match {
+      case where if where.isDirectory => scanner1.scanDir(where, recursive = true)
+      case src if src.isFile => scanner1.scanFile(src)
+    }
+    vs1
+  }
 
   @Test
   def t2 {

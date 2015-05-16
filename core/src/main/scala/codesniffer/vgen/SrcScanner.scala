@@ -27,9 +27,12 @@ class SrcScanner(val context: Context) {
       context.currentLocation = new Location(fileName, 0, null)
 
       val stream = new FileInputStream(src)
-//      println(fileName)
-      val cu = JavaParser.parse(stream, "UTF-8", false)
-
+      val cu = try {
+         JavaParser.parse(stream, "UTF-8", false)
+      } catch {
+        case e: Exception => println(s"Could not parse file ${src.getPath}")
+          throw e
+      }
       // search for class definition
       fileVisitor.visit(cu, context)
       stream.close()

@@ -36,7 +36,7 @@ def appendTo(sb: StringBuilder): StringBuilder = {
 
   // empirical, no why
   def distance(other: MethodDescriptor): Double = {
-    var dist = if (typeName != other.typeName) 0.6 else 0.0
+    var dist = if (typeName != other.typeName) 0.4 else 0.0
 //    if (modifier != other.modifier) dist += 0.4
 
     dist + {
@@ -46,12 +46,12 @@ def appendTo(sb: StringBuilder): StringBuilder = {
             case Some(ops) =>
               ps.zipAll(ops, "1", "0").foldLeft(0.0) { (sum, p) =>
                 if (p._1 != p._2)
-                  sum + 0.3
+                  sum + 0.2
                 else sum
               }
-            case None => ps.size
+            case None => ps.size / 5
           }
-        case None => if (other.parameterTypes.isDefined) other.parameterTypes.get.size else 0
+        case None => if (other.parameterTypes.isDefined) other.parameterTypes.get.size / 5 else 0
       }
     }
   }

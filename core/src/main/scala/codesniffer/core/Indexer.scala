@@ -13,16 +13,16 @@ import scala.reflect.ClassTag
  */
 class Indexer[T: ClassTag] {
 
-  private val val2IndexMap = new mutable.HashMap[T, Int]
-  val2IndexMap.sizeHint(256)
+  private val val2Index = new mutable.HashMap[T, Int]
+  val2Index.sizeHint(256)
 
-  private var index2ValMap = new Array[T](128)
+  private var index2Val = new Array[T](128)
 
-  def maxIndex = val2IndexMap.size - 1
+  def maxIndex = val2Index.size - 1
 
-  def probe(value: T): Option[Int] = val2IndexMap.get(value)
+  def probe(value: T): Option[Int] = val2Index.get(value)
 
-  def apply(value: T): Option[Int] = probe(value)
+  def apply(value: T): Option[Int] = val2Index.get(value)
   def apply(idx: Int): Option[T] = valueAt(idx)
 
   /**
@@ -30,23 +30,23 @@ class Indexer[T: ClassTag] {
    * @param value
    * @return index for this value, create new index if this value is new
    */
-  def indexOf(value: T): Int = val2IndexMap.getOrElse(value, {
-    val index = val2IndexMap.size
-    val2IndexMap.put(value, index)
+  def indexOf(value: T): Int = val2Index.getOrElse(value, {
+    val index = val2Index.size
+    val2Index.put(value, index)
 
-    val mapSz = index2ValMap.length
+    val mapSz = index2Val.length
     if (index >= mapSz) {
       val newar = new Array[T](mapSz * 2)
-      System.arraycopy(index2ValMap, 0, newar, 0, mapSz)
-      index2ValMap = newar
+      System.arraycopy(index2Val, 0, newar, 0, mapSz)
+      index2Val = newar
     }
-    index2ValMap(index) = value
+    index2Val(index) = value
     index
   })
 
   def valueAt(idx: Int): Option[T] =
-    if (idx < index2ValMap.length)
-      Option(index2ValMap(idx)) // may be null
+    if (idx < index2Val.length)
+      Option(index2Val(idx)) // may be null
     else None
 
   /**
@@ -55,9 +55,9 @@ class Indexer[T: ClassTag] {
    * @return index of this key, None if not find
    */
   def remove(value: T): Option[Int] = {
-    val optIdx = val2IndexMap.remove(value)
+    val optIdx = val2Index.remove(value)
     if(optIdx.isDefined) {
-      index2ValMap(optIdx.get) = null.asInstanceOf[T]
+      index2Val(optIdx.get) = null.asInstanceOf[T]
     }
     optIdx
   }
@@ -68,11 +68,11 @@ class Indexer[T: ClassTag] {
    * @return key, i.e., the value at this index, None if not find
    */
   def remove(index: Int): Option[T] = {
-    val optP = val2IndexMap.find(_._2 == index)
+    val optP = val2Index.find(_._2 == index)
     if (optP.isDefined){
       val pair = optP.get
-      val2IndexMap -= pair._1
-      index2ValMap(pair._2) = null.asInstanceOf[T]
+      val2Index -= pair._1
+      index2Val(pair._2) = null.asInstanceOf[T]
       Some(optP.get._1)
     } else None
   }
@@ -81,19 +81,19 @@ class Indexer[T: ClassTag] {
    * clear this indexer, but keep the memory
    */
   def clear(): Unit = {
-    for(i <- 0 until index2ValMap.length)
-      index2ValMap(i) = null.asInstanceOf[T]
-    val2IndexMap.clear()
+    for(i <- 0 until index2Val.length)
+      index2Val(i) = null.asInstanceOf[T]
+    val2Index.clear()
   }
 
-  def appendTo(sb: mutable.StringBuilder): mutable.StringBuilder = index2ValMap.take(val2IndexMap.size).addString(sb, " ")
-  override def toString = appendTo(new StringBuilder(val2IndexMap.size * 15)).toString()
+  def appendTo(sb: mutable.StringBuilder): mutable.StringBuilder = index2Val.take(val2Index.size).addString(sb, " ")
+  override def toString = appendTo(new StringBuilder(val2Index.size * 15)).toString()
 
 
   override def hashCode(): Int = {
     var result = 1
     for (i <- 0 to maxIndex) {
-      val e = index2ValMap(i)
+      val e = index2Val(i)
       result = 31 * result + (if (e == null) 0 else e.hashCode)
     }
     result
@@ -107,8 +107,8 @@ class Indexer[T: ClassTag] {
           false
         else {
         for (i <- 0 to maxIndex) {
-          val o1 = index2ValMap(i)
-          val o2 = other.index2ValMap(i)
+          val o1 = index2Val(i)
+          val o2 = other.index2Val(i)
           if (!(if (o1 == null) o2 == null else o1 == o2)) return false
         }
         true

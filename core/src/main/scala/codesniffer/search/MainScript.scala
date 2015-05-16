@@ -71,7 +71,7 @@ object MainScript {
 
     type SortedList = util.TreeMap[Double, (CharacVec[_], CharacVec[_])]
 
-    val procCount = Runtime.getRuntime.availableProcessors()
+    val procCount: Int = Runtime.getRuntime.availableProcessors()
 
     // forkjoin out performs threadpool
     //    import ExecutionContext.Implicits.global

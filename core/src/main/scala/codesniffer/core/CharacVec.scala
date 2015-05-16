@@ -36,7 +36,7 @@ case class CharacVec[T](indexer: Indexer[T],
     val vecLen = vector.length
     val validCount = indexer.maxIndex + 1
     if (validNodeTypeCount != vecLen) {
-      val sz = if (vecLen > validCount) validCount else vecLen
+      val sz = if (validCount > vecLen) vecLen else validCount
       val arr = new Array[Int](validCount)
       System.arraycopy(vector, 0, arr, 0, sz)
       vector = arr
@@ -154,26 +154,39 @@ case class CharacVec[T](indexer: Indexer[T],
     }
 
   def dist2[A](other: CharacVec[A]): Double = {
-    if (other.indexer == indexer) {
       descriptor.distance(other.descriptor)
-      +MathUtils.EuclideanDist(intern, other.intern, length)
-    } else throw new IllegalArgumentException(
-      s"Could not calculate Euclidean distance of two vectors in different coordinates: \r\n$this, \r\n$other")
+      + math.EuclideanDist(other)
   }
 
   object math {
 
     def EuclideanDist[A](other: CharacVec[A]): Double = {
-      if (other.indexer == indexer)
-         MathUtils.EuclideanDist(intern, other.intern, length)
-      else throw new IllegalArgumentException(
+      if (other.indexer == indexer) {
+        val sl = vector.length
+        val ol = other.vector.length
+        if (sl < ol) {
+          ensureSize(ol)
+          MathUtils.EuclideanDist(vector, other.vector, ol)
+        } else if (ol < sl) {
+          other.ensureSize(sl)
+          MathUtils.EuclideanDist(vector, other.vector, sl)
+        } else MathUtils.EuclideanDist(vector, other.vector, sl)
+      } else throw new IllegalArgumentException(
         s"Could not calculate Euclidean distance of two vectors in different coordinates: \r\n$this, \r\n$other")
     }
 
     def CosineDist[A](other: CharacVec[A]): Double = {
-      if (other.indexer == indexer)
-        MathUtils.CosineDist(intern, other.intern, length)
-      else throw new IllegalArgumentException(
+      if (other.indexer == indexer) {
+        val sl = vector.length
+        val ol = other.vector.length
+        if (sl < ol) {
+          ensureSize(ol)
+          MathUtils.CosineDist(vector, other.vector, ol)
+        } else if (ol < sl) {
+          other.ensureSize(sl)
+          MathUtils.CosineDist(vector, other.vector, sl)
+        } else MathUtils.CosineDist(vector, other.vector, sl)
+      } else throw new IllegalArgumentException(
         s"Could not calculate Cosine distance of two vectors in different coordinates: \r\n$this, \r\n$other")
     }
 
