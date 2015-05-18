@@ -3,7 +3,6 @@ package codesniffer.vgen
 import java.lang.reflect.Modifier
 
 import codesniffer.core._
-import codesniffer.search.NodeCount
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.`type`._
 import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
@@ -37,47 +36,12 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
         val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method))
         before(method, vec, ctx)
 
-        var locked = false
-        for (stmt <- method.getBody.getStmts) {
-          stmt match {
-              // case 1: filter lock.lock()
-            case es: ExpressionStmt => es.getExpression match {
-              case mc: MethodCallExpr =>
-                if (mc.getName == "lock") locked = true
-                else addMethodCall(mc, vec)
-              case _ => collectNode(es, vec)(ctx)
-            }
-
-            case tryStmt: TryStmt =>
-              collectNodes(tryStmt.getResources, vec)(ctx)
-              collectNode(tryStmt.getTryBlock, vec)(ctx)
-              collectNodes(tryStmt.getCatchs, vec)(ctx)
-              // skip unlock call
-              if (locked) {
-                val flyblk = tryStmt.getFinallyBlock
-                if (flyblk != null) {
-                  for (fstmt <- flyblk.getStmts) fstmt match {
-                    case es: ExpressionStmt => es.getExpression match {
-                      case mc: MethodCallExpr =>
-                        if (mc.getName == "unlock") locked = false
-                        else addMethodCall(mc, vec)
-                      case _ => collectNode(es, vec)(ctx)
-                    }
-                    case _ => collectNode(fstmt, vec)(ctx)
-                  }
-                }
-              } else collectNode(tryStmt, vec)(ctx)
-
-            case _=>collectNode(stmt, vec)(ctx)
-          }
-
-        } // for
-
-//        for (stmt <- method.getBody.getStmts)
-//          collectNode(stmt, vec)(ctx)
-
+        try {
+          collectNodes(method.getBody.getStmts, vec)(ctx)
+        } catch {
+          case e: Exception => throw new RuntimeException(s"Could not travel though method ${ctx.currentLocation}", e)
+        }
         ctx.vecWriter.write(vec)
-
         after(method, vec, ctx)
         ctx.currentLocation = prevLoc
       }
@@ -85,56 +49,62 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
 
 
   protected def collectNodes[E <:Node](nodes: java.util.List[E], vec: CharacVec[String])(implicit ctx: Context): Unit = {
-    if (nodes != null && nodes.size() > 0)
+    if (nodes != null && nodes.size > 0)
       for (n <- nodes)
         collectNode(n, vec)(ctx)
   }
 
-  protected def collectNode(pnode: Node, vec: CharacVec[String])(implicit ctx: Context): Unit =
-    if (!ctx.config.filterNode(pnode)) {
-    pnode match {
-
-      case stmt: Statement => stmt match {
-        // skip ExpressionStmt
-        case est: ExpressionStmt =>
-          collectNode(est.getExpression, vec)
-          // skip BlockStmt
-        case bst: BlockStmt =>
-          val ss = bst.getStmts
-          if (ss != null) {
-            for (s <- ss) {
-              collectNode(s, vec)
+  protected def collectNode(pnode: Node, vec: CharacVec[String])(implicit ctx: Context): Unit = {
+    val cfg = ctx.config
+    if (!cfg.filterNode(pnode)) {
+      if (ctx.config.skipNode(pnode)) {
+        collectNodes(pnode.getChildrenNodes, vec)
+      } else
+        pnode match {
+          case stmt: Statement =>
+            if (!cfg.filterStmt(stmt)) {
+              if (ctx.config.skipStmt(stmt))
+                collectNodes(stmt.getChildrenNodes, vec)
+              else
+                collectStmt(stmt, vec)
             }
-          }
-        // filter stmt
-        case fst =>
-          if (! ctx.config.filterStmt(fst))
-            continue(fst, vec)
-      }
+          // filter expr
+          case expr: Expression =>
+            if (!cfg.filterExpr(expr)) {
+              if (cfg.skipExpr(expr))
+                collectNodes(expr.getChildrenNodes, vec)
+              else
+                continue(expr, vec)
+            }
 
-      // filter expr
-      case expr: Expression =>
-        if (!ctx.config.filterExpr(expr))
-          continue(expr, vec)
+          // continue with new class
+          case tp: ClassOrInterfaceDeclaration if !tp.isInterface =>
+            classVisitor.visit(tp, ctx)
 
-        // continue with new class
-      case tp: ClassOrInterfaceDeclaration if !tp.isInterface =>
-        classVisitor.visit(tp, ctx)
-      case node => continue(node, vec)
+          case node => continue(node, vec)
+        }
     }
+  }
+  protected def collectStmt(stmt: Statement, vec: CharacVec[String])(implicit ctx: Context): Unit = stmt match {
+    // skip ExpressionStmt
+    case est: ExpressionStmt =>
+      collectNode(est.getExpression, vec)
+    // skip BlockStmt
+    case bst: BlockStmt =>
+      collectNodes(bst.getStmts, vec)
+    // filter others stmt
+    case fst =>
+      if (!ctx.config.filterStmt(fst))
+        continue(fst, vec)
   }
 
   protected def continue(node: Node, vec: CharacVec[String])(implicit ctx: Context): Unit =
     node match {
       case call: MethodCallExpr =>
-        addMethodCall(call, vec)
+          addMethodCall(call, vec)
       case _ =>
         vec.put(findNodeName(node))
-        val children = node.getChildrenNodes
-        if (children != null && children.size() > 0) {
-          for (n <- children)
-            collectNode(n, vec)
-        }
+        collectNodes(node.getChildrenNodes, vec)
     }
 
   protected def addMethodCall(call: MethodCallExpr, vec: CharacVec[String]): Unit = {

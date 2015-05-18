@@ -49,7 +49,7 @@ object NodeCount {
     // test classes
     // meaningless statements
     val config = new Config
-    config.filterFileName = (name: String) => (
+    config.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
       )

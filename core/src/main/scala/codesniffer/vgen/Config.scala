@@ -17,13 +17,19 @@ class Config {
   private def NOP[T](p:T):Boolean = false
 
   var filterFile: File=>Boolean = NOP[File]
-  var filterFileName: String=>Boolean = NOP[String]
+  var filterDirName: String=>Boolean = NOP[String] //(name: String) => !name.endsWith(".java")
   var filterPackage: PackageDeclaration => Boolean = NOP[PackageDeclaration]
   var filterClass: ClassOrInterfaceDeclaration => Boolean = NOP[ClassOrInterfaceDeclaration]
   var filterMethod: MethodDeclaration => Boolean = NOP[MethodDeclaration]
 
+  // filter out one and its children
   var filterNode: Node => Boolean = NOP[Node]
+  // skip this one, continue with its children
+  var skipNode: Node => Boolean = NOP[Node]
+
   var filterStmt: Statement => Boolean = NOP[Statement]
+  var skipStmt: Statement => Boolean = NOP[Statement]
   var filterExpr: Expression => Boolean = NOP[Expression]
+  var skipExpr: Expression => Boolean = NOP[Expression]
 
 }

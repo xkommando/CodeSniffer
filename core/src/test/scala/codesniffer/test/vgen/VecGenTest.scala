@@ -12,7 +12,7 @@ import codesniffer.core._
 import codesniffer.vgen._
 import com.github.javaparser.{ASTParser, JavaParser}
 import com.github.javaparser.ast.expr.{QualifiedNameExpr, ThisExpr}
-import com.github.javaparser.ast.stmt.{SynchronizedStmt, EmptyStmt}
+import com.github.javaparser.ast.stmt.{Statement, SynchronizedStmt, EmptyStmt}
 import com.github.javaparser.ast.{Node, CompilationUnit}
 import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclaration}
 import org.junit.Test
@@ -30,14 +30,13 @@ class VecGenTest {
   @Test
   def t_filter_locks: Unit = {
     val path = "E:\\Dev\\scala\\TestScala\\src\\main\\java\\testsrc\\Src3.java"
-    val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr] || node.isInstanceOf[SynchronizedStmt]
+    val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
     val _libConfig = new Config
-    _libConfig.filterFileName = (name: String) => (
+    _libConfig.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Test.java") // filter out test file
       )
     _libConfig.filterNode = _nodeFilter
-
     val vecs = vgen(path, new Indexer[String], _libConfig)
     println(vecs(0).indexer)
     vecs.foreach(println)

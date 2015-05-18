@@ -38,7 +38,6 @@ final case class MethodScope(name: String, parent: Scope) extends Scope {
 
 case class Location(file: String, line: Int, scope: Scope) {
 
-
   /**
    *
    * enter a new scope, e.g., append new node to linked list, and return this list (a new location)

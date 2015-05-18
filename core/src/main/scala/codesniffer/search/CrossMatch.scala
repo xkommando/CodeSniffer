@@ -10,7 +10,7 @@ import codesniffer.vgen.{Config, Context, SrcScanner}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.ThisExpr
-import com.github.javaparser.ast.stmt.{EmptyStmt, SynchronizedStmt}
+import com.github.javaparser.ast.stmt.{Statement, EmptyStmt, SynchronizedStmt}
 
 import scala.collection.convert.wrapAsScala._
 import scala.collection.mutable.ArrayBuffer
@@ -27,56 +27,52 @@ object CrossMatch {
   def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter = {
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
-
-    val vs1 = new MemWriter
-    val scanner1 = new SrcScanner(new Context(cfg, null, idx, vs1))
+    val vs = new MemWriter
+    val scanner = new SrcScanner(new Context(cfg, null, idx, vs))
     // save exact source to vector, for manually check
-    scanner1.methodVisitor.before =
+    scanner.methodVisitor.before =
       (m: MethodDeclaration, v: CharacVec[_], ctx: Context)=> v.data = Some(m.toString)
-
     dir match {
-      case where if where.isDirectory => scanner1.scanDir(where, recursive = true)
-      case src if src.isFile => scanner1.scanFile(src)
+      case where if where.isDirectory => scanner.scanDir(where, recursive = true)
+      case src if src.isFile => scanner.scanFile(src)
     }
-    vs1
+    vs
   }
 
   def findMatch(vLib: CharacVec[String], vApps: MemWriter, result: SortedList): SortedList = {
     val c1 = vLib.count
     for (vApp <- vApps) {
       val c2 = vApp.count
-
       if (c1 > 20 && c2 > 20 && math.abs(c1 - c2) < 60) {
-        // this could significantly reduce comparison
-        //            val dist = a.dist2(b)
         val dist = vLib.dist2(vApp)
         if (dist < 20)
-          result.put(dist, (vLib.asInstanceOf[CharacVec[String]], vApp.asInstanceOf[CharacVec[String]]))
+          result.put(dist, (vLib, vApp.asInstanceOf[CharacVec[String]]))
       }
     }
     result
   }
 
   def main(args: Array[String]): Unit = {
-
-    //    var path2app: String = "E:\\research\\top\\spring-framework"
     var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
 //    var path2lib: String = "E:\\research\\top\\jdk-1.7\\java\\util\\concurrent"
     var path2Apps = Array("E:\\\\research\\\\top\\\\h2-1.4.187-sources",
       "E:\\research\\top\\derby",
-      "E:\\research\\top\\Openfire")
-//
+      "E:\\research\\top\\Openfire",
+      "E:\\research\\top\\spring-framework",
+      "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19")
+
     var resultSize = 20
 
-    if (args != null && args.length > 2) {
-      resultSize = Integer.parseInt(args(0))
-      path2lib = args(1)
-      path2Apps = args.drop(2)
-    } else {
-      println("Usage: <result_size> <path-to-library> <path-to-app> <path-to-app> ...")
-      System.exit(1)
-    }
-    println(s"Matching library $path2lib against application:")
+//    if (args != null && args.length > 2) {
+//      resultSize = Integer.parseInt(args(0))
+//      path2lib = args(1)
+//      path2Apps = args.drop(2)
+//    } else {
+//      println("Usage: <result_size> <path-to-library> <path-to-app> <path-to-app> ...")
+//      System.exit(1)
+//    }
+
+    println(s"Matching library $path2lib against applications:")
     path2Apps.foreach(println)
 
     /**
@@ -88,20 +84,21 @@ object CrossMatch {
     val procCount = Runtime.getRuntime.availableProcessors()
     implicit val _exe = ExecutionContext.fromExecutor(java.util.concurrent.Executors.newFixedThreadPool(procCount)).prepare()
 
+    val _skipSync = (stmt: Statement)=> stmt.isInstanceOf[SynchronizedStmt]
+
     val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr] || node.isInstanceOf[SynchronizedStmt]
+    val fileNameFilter = (name: String) => (
+        name.equals("package-info.java") // filter out package file
+        || name.endsWith("Tests.java") // filter out test file
+        || name.endsWith("Test.java") // filter out test file
+      )
 
     val _appConfig = new Config
-    _appConfig.filterFileName = (name: String) => (
-      name.equals("package-info.java") // filter out package file
-        || name.endsWith("Tests.java") // filter out test file
-      )
+    _appConfig.filterDirName = fileNameFilter
     _appConfig.filterNode = _nodeFilter
 
     val _libConfig = new Config
-    _libConfig.filterFileName = (name: String) => (
-      name.equals("package-info.java") // filter out package file
-        || name.endsWith("Test.java") // filter out test file
-      )
+    _libConfig.filterDirName = fileNameFilter
     _libConfig.filterNode = _nodeFilter
 //    in a library, only public method is open to use
 //    _libConfig.filterMethod = (m: MethodDeclaration) => !Modifier.isPublic(m.getModifiers)
@@ -136,7 +133,6 @@ object CrossMatch {
       while (results(i).size() * 2 > resultSize * 3) results(i).pollLastEntry()
     }
 
-
     Future.sequence(tasks) onComplete {
       case Success(r) =>
         t1 = System.currentTimeMillis()
@@ -156,9 +152,11 @@ object CrossMatch {
           i += 1
         }
 
+        System.exit(0)
       case Failure(t) =>
         println(s"Search failed, error:$t")
     }
+
 
   }
 
