@@ -1,21 +1,18 @@
 package codesniffer.search
 
 import java.io.File
-import java.lang.reflect.Modifier
 import java.util
-import java.util.concurrent.atomic.AtomicInteger
 
 import codesniffer.core.{CharacVec, Indexer, MemWriter}
 import codesniffer.vgen.{Config, Context, SrcScanner}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.ThisExpr
-import com.github.javaparser.ast.stmt.{Statement, EmptyStmt, SynchronizedStmt}
+import com.github.javaparser.ast.stmt.{EmptyStmt, Statement, SynchronizedStmt}
 
 import scala.collection.convert.wrapAsScala._
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 /**
  * Created by Bowen Cai on 5/15/2015.
@@ -44,7 +41,7 @@ object CrossMatch {
     for (vApp <- vApps) {
       val c2 = vApp.count
       if (c1 > 20 && c2 > 20 && math.abs(c1 - c2) < 60) {
-        val dist = vLib.dist2(vApp)
+        val dist = vLib.distance(vApp)
         if (dist < 20)
           result.put(dist, (vLib, vApp.asInstanceOf[CharacVec[String]]))
       }

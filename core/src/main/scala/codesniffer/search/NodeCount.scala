@@ -2,10 +2,10 @@ package codesniffer.search
 
 import java.io.File
 import java.util
-import java.util.concurrent.atomic.{AtomicReference, AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
-import codesniffer.core.{CharacVec, MemWriter, Indexer, Location}
-import codesniffer.vgen.{Context, SrcScanner, Config}
+import codesniffer.core._
+import codesniffer.vgen.{Config, Context, SrcScanner}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.ThisExpr
@@ -58,7 +58,7 @@ object NodeCount {
     val vecCollector = new MemWriter
     val scanner = new SrcScanner(new Context(config, null, new Indexer[String], vecCollector))
 
-    scanner.methodVisitor.before = (method: MethodDeclaration, v: CharacVec[_], c: Context)=> {
+    scanner.methodVisitor.before = (method: MethodDeclaration, v: ArrayVec[_], c: Context)=> {
       methodCount.incrementAndGet()
       val _stmtNum = method.getBody.getStmts.size()
       topStmtCount.addAndGet(_stmtNum)
@@ -67,7 +67,7 @@ object NodeCount {
         stmtGrp.update(_stmtNum, old + 1)
       }
     }
-    scanner.methodVisitor.after = (method: MethodDeclaration, last: CharacVec[_], c: Context)=> {
+    scanner.methodVisitor.after = (method: MethodDeclaration, last: ArrayVec[_], c: Context)=> {
       val c = last.count
       nodeCount.addAndGet(c)
       nodeGrp.synchronized{

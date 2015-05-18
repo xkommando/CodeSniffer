@@ -102,7 +102,7 @@ object MathUtils {
     _sampleSize = if (_sampleSize < 100) vectorCount
     else  if (_sampleSize > 10000) 10000 else _sampleSize
 
-    val sample = new ArrayBuffer[CharacVec[_]](_sampleSize)
+    val sample = new ArrayBuffer[ArrayVec[_]](_sampleSize)
     for (i <- session.random.shuffle((0 until session.vectors.length).toList).take(_sampleSize)) {
       sample += session.vectors(i)
     }

@@ -21,9 +21,7 @@ object Session {
 }
 class Session(val successProb: Double,
               val thresholdR: Double,
-              val vectors: Seq[CharacVec[_]], val indexer: Indexer[_]) extends LifeCycle { //, reader: VecReader, writer: VecWriter
-
-  import Session._
+              val vectors: Seq[ArrayVec[_]], val indexer: Indexer[_]) extends LifeCycle { //, reader: VecReader, writer: VecWriter
 
   var _hashParam: HashParam = _
   def hashParam = _hashParam
@@ -35,7 +33,7 @@ class Session(val successProb: Double,
 
 
   // computeOptimalParameters
-  def init(sampleQueries: Seq[CharacVec[_]]): Unit = { // return LSHTable ???
+  def init(sampleQueries: Seq[ArrayVec[_]]): Unit = { // return LSHTable ???
     val param : HashParam = getOptimizedParam()
 
 //    for (i <- 0 until nHFTuples) {

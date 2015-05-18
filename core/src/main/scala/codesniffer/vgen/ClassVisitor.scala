@@ -1,7 +1,8 @@
 package codesniffer.vgen
 
-import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclaration}
+import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
 import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
+
 import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
 

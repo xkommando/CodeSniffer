@@ -1,7 +1,7 @@
 package codesniffer.core
 
 import net.liftweb.json.JsonAST.JString
-import net.liftweb.json.{parse, _}
+import net.liftweb.json._
 
 /**
  * @author BowenCai

@@ -1,8 +1,5 @@
 package codesniffer.core
 
-import java.util
-
-import scala.StringBuilder
 import scala.collection.mutable
 import scala.reflect.ClassTag
 

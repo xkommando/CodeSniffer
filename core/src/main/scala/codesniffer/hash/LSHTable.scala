@@ -1,13 +1,10 @@
 package codesniffer.hash
 
 
-import codesniffer.core.{CharacVec, MathUtils}
+import codesniffer.core.MathUtils.applyConversion
+import codesniffer.core.{ArrayVec, MathUtils}
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 import scala.util.Random
-import MathUtils.applyConversion
 
 /**
  * Created by Bowen Cai on 4/25/2015.
@@ -71,7 +68,7 @@ class LSHTable(val param: HashParam, val random: Random, nPointsEstimate: Int) {
   private val _markedPoints = new Array[Boolean](_sizeMarkedPoints)
   private val _markedPointsIndeces = new Array[Int](_sizeMarkedPoints)
 
-  private def prepareAdd(vec: CharacVec[_]): Unit = {
+  private def prepareAdd(vec: ArrayVec[_]): Unit = {
     val arr = vec.intern
     for (i <- 0 until _reducedPoint.length)
       _reducedPoint(i) = arr(i) / param.paramR
@@ -92,7 +89,7 @@ class LSHTable(val param: HashParam, val random: Random, nPointsEstimate: Int) {
 
   //-----------------------------------------------------------------
   //
-  def add(vec: CharacVec[_]): Unit = {
+  def add(vec: ArrayVec[_]): Unit = {
 
     prepareAdd(vec)
 

@@ -7,8 +7,9 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.`type`._
 import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
 import com.github.javaparser.ast.expr._
-import com.github.javaparser.ast.stmt.{BlockStmt, TryStmt, Statement, ExpressionStmt}
-import com.github.javaparser.ast.visitor.{VoidVisitorAdapter, VoidVisitor, GenericVisitorAdapter}
+import com.github.javaparser.ast.stmt.{BlockStmt, ExpressionStmt, Statement}
+import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
+
 import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
 /**
@@ -18,7 +19,7 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
 
   @BeanProperty var classVisitor: VoidVisitor[Context] = _
 
-  val NOP = (m: MethodDeclaration, v: CharacVec[_], ctx: Context) => {}
+  val NOP = (m: MethodDeclaration, v: ArrayVec[_], ctx: Context) => {}
   var before = NOP
   var after = NOP
 
@@ -33,10 +34,14 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
 
         val prevLoc = ctx.currentLocation
         ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
-        val vec = new CharacVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method))
+        val vec = new ArrayVec[String](ctx.indexer, ctx.currentLocation, methodName, extractSignature(method))
         before(method, vec, ctx)
 
         try {
+//          val counter = new CounterVec[String]
+//          collectNodes(method.getBody.getStmts, counter)(ctx)
+//          val c1 = counter.count
+
           collectNodes(method.getBody.getStmts, vec)(ctx)
         } catch {
           case e: Exception => throw new RuntimeException(s"Could not travel though method ${ctx.currentLocation}", e)
@@ -85,6 +90,7 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
         }
     }
   }
+
   protected def collectStmt(stmt: Statement, vec: CharacVec[String])(implicit ctx: Context): Unit = stmt match {
     // skip ExpressionStmt
     case est: ExpressionStmt =>
@@ -112,7 +118,7 @@ class MethodVisitor extends VoidVisitorAdapter[Context] {
     val scope = findCallee(call.getScope)
     val methodName = call.getName
     //          val lsExps = call.getArgs
-    vec.calls += (scope -> methodName)
+    vec.funcCalls += (scope -> methodName)
   }
 
   protected def findCallee(exp: Expression): String = exp match {

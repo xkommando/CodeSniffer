@@ -26,7 +26,6 @@ import scala.util.Random
  */
 class VecGenTest {
 
-
   @Test
   def t_filter_locks: Unit = {
     val path = "E:\\Dev\\scala\\TestScala\\src\\main\\java\\testsrc\\Src3.java"
@@ -37,8 +36,9 @@ class VecGenTest {
         || name.endsWith("Test.java") // filter out test file
       )
     _libConfig.filterNode = _nodeFilter
-    val vecs = vgen(path, new Indexer[String], _libConfig)
-    println(vecs(0).indexer)
+    val idx = new Indexer[String]
+    val vecs = vgen(path, idx, _libConfig)
+    println(idx)
     vecs.foreach(println)
   }
 
@@ -50,7 +50,7 @@ class VecGenTest {
     val scanner1 = new SrcScanner(new Context(cfg, null, idx, vs1))
     // save exact source to vector, for manually check
     scanner1.methodVisitor.before =
-      (m: MethodDeclaration, v: CharacVec[_], ctx: Context)=> v.data = Some(m.toString)
+      (m: MethodDeclaration, v: ArrayVec[_], ctx: Context)=> v.data = Some(m.toString)
 
     dir match {
       case where if where.isDirectory => scanner1.scanDir(where, recursive = true)
@@ -142,7 +142,7 @@ class VecGenTest {
       })
 
       //---------------------
-      val sampleVec = ctx.vecWriter.asInstanceOf[MemWriter](1).asInstanceOf[CharacVec[String]]
+      val sampleVec = ctx.vecWriter.asInstanceOf[MemWriter](1).asInstanceOf[ArrayVec[String]]
       println(sampleVec.methodName + "   " + sampleVec.intern.count(_=>true))
       println(
         sampleVec.intern.foldLeft(0){(sum: Int, i)=>sum + i}

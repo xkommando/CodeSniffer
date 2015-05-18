@@ -2,7 +2,7 @@ package codesniffer.vgen
 
 import java.io.{File, FileInputStream, FilenameFilter}
 
-import codesniffer.core.{Indexer, Location, MemWriter}
+import codesniffer.core.Location
 import com.github.javaparser.JavaParser
 
 /**

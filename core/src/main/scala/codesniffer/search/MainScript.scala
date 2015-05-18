@@ -1,12 +1,10 @@
 package codesniffer.search
 
-import java.io.{File, FileInputStream, FilenameFilter}
+import java.io.File
 import java.util
-import java.util.concurrent.TimeUnit
 
 import codesniffer.core._
 import codesniffer.vgen._
-import com.github.javaparser.JavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.ThisExpr
 import com.github.javaparser.ast.stmt.EmptyStmt
@@ -69,7 +67,7 @@ object MainScript {
     val vecCount = vecCollector.length
     println(s"$vecCount vectors generated, time ${tv2 - tv1} ms")
 
-    type SortedList = util.TreeMap[Double, (CharacVec[_], CharacVec[_])]
+    type SortedList = util.TreeMap[Double, (ArrayVec[_], ArrayVec[_])]
 
     val procCount: Int = Runtime.getRuntime.availableProcessors()
 
@@ -91,9 +89,9 @@ object MainScript {
       val left = vecCount - (math.sqrt(i / dprocCount) * vecCount).toInt
       for (j <- left until right) {
         for (k <- (i + 1) until vecCount) {
-          val a = vecCollector(j).asInstanceOf[CharacVec[String]]
+          val a = vecCollector(j).asInstanceOf[ArrayVec[String]]
           val ac = a.count
-          val b = vecCollector(k).asInstanceOf[CharacVec[String]]
+          val b = vecCollector(k).asInstanceOf[ArrayVec[String]]
           val bc = b.count
           if (ac > 20 && bc > 20 && math.abs(ac - bc) < 60) { // this could significantly reduce comparison
 //            val dist = a.dist2(b)

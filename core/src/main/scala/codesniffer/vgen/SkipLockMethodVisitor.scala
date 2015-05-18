@@ -4,6 +4,7 @@ import codesniffer.core.CharacVec
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.stmt._
+
 import scala.collection.convert.wrapAsScala._
 
 /**

@@ -1,6 +1,6 @@
 package codesniffer.vgen
 
-import codesniffer.core.{Location, Indexer, VecWriter}
+import codesniffer.core.{Indexer, Location, VecWriter}
 
 /**
  * Created by Bowen Cai on 4/12/2015.

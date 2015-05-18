@@ -5,8 +5,6 @@ package codesniffer.core
  */
 object MathDef {
 
-  import StrictMath.{log10, exp}
-
   def ln = StrictMath.log(_)
 
   val log2baseE = StrictMath.log(2.0)

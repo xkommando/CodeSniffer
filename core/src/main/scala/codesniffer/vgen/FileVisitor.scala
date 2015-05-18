@@ -3,7 +3,7 @@ package codesniffer.vgen
 import codesniffer.core.PackageScope
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.expr.{NameExpr, QualifiedNameExpr}
+import com.github.javaparser.ast.expr.QualifiedNameExpr
 import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
 
 import scala.beans.BeanProperty
