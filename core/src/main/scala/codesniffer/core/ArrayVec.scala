@@ -57,25 +57,15 @@ case class ArrayVec[T](indexer: Indexer[T],
     val idx = indexer.indexOf(name)
     ensureSize(idx + 1)
     vector(idx) += weight
-    _count += weight
+    _count += 1
     _count
   }
 
   override def remove(name: T): Int = {
     val optIdx = indexer(name)
     if (optIdx.isDefined && optIdx.get < vector.length) {
-      val v = vector(optIdx.get)
       vector(optIdx.get) = 0
-      _count -= v
-      _count
-    } else throw new NoSuchElementException(name.toString)
-  }
-
-  override def remove(name: T, weight: Int  = 1): Int = {
-    val optIdx = indexer(name)
-    if (optIdx.isDefined && optIdx.get < vector.length) {
-      vector(optIdx.get) -= weight
-      _count -= weight
+      _count -= 1
       _count
     } else throw new NoSuchElementException(name.toString)
   }

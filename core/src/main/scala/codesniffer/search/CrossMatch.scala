@@ -4,7 +4,7 @@ import java.io.File
 import java.util
 
 import codesniffer.core.{CharacVec, Indexer, MemWriter}
-import codesniffer.vgen.{Config, Context, SrcScanner}
+import codesniffer.vgen.{BasicVGen, Config, Context, SrcScanner}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.ThisExpr
@@ -21,14 +21,19 @@ object CrossMatch {
 
   type SortedList = util.TreeMap[Double, (CharacVec[String], CharacVec[String])]
 
-  def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter = {
+  def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter[String] = {
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
-    val vs = new MemWriter
-    val scanner = new SrcScanner(new Context(cfg, null, idx, vs))
+    val vs = new MemWriter[String]
+    val scanner = new SrcScanner(new Context[String](cfg, null, idx, vs))
     // save exact source to vector, for manually check
     scanner.methodVisitor.before =
-      (m: MethodDeclaration, v: CharacVec[_], ctx: Context)=> v.data = Some(m.toString)
+      (m: MethodDeclaration, ctx: Context[String])=> {
+        val v = BasicVGen.newVec[String](m, ctx)
+        v.data = Some(m.toString)
+        v
+      }
+
     dir match {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
       case src if src.isFile => scanner.scanFile(src)
@@ -36,7 +41,7 @@ object CrossMatch {
     vs
   }
 
-  def findMatch(vLib: CharacVec[String], vApps: MemWriter, result: SortedList): SortedList = {
+  def findMatch(vLib: CharacVec[String], vApps: MemWriter[String], result: SortedList): SortedList = {
     val c1 = vLib.count
     for (vApp <- vApps) {
       val c2 = vApp.count
@@ -60,14 +65,14 @@ object CrossMatch {
 
     var resultSize = 20
 
-//    if (args != null && args.length > 2) {
-//      resultSize = Integer.parseInt(args(0))
-//      path2lib = args(1)
-//      path2Apps = args.drop(2)
-//    } else {
-//      println("Usage: <result_size> <path-to-library> <path-to-app> <path-to-app> ...")
-//      System.exit(1)
-//    }
+    if (args != null && args.length > 2) {
+      resultSize = Integer.parseInt(args(0))
+      path2lib = args(1)
+      path2Apps = args.drop(2)
+    } else {
+      println("Usage: <result_size> <path-to-library> <path-to-app> <path-to-app> ...")
+      System.exit(1)
+    }
 
     println(s"Matching library $path2lib against applications:")
     path2Apps.foreach(println)
@@ -83,7 +88,7 @@ object CrossMatch {
 
     val _skipSync = (stmt: Statement)=> stmt.isInstanceOf[SynchronizedStmt]
 
-    val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr] || node.isInstanceOf[SynchronizedStmt]
+    val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
     val fileNameFilter = (name: String) => (
         name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
@@ -113,7 +118,7 @@ object CrossMatch {
     var t1 = System.currentTimeMillis()
     println(s"library searched, ${vsLib.size} vectors generated, time ${t1 - t0} ms")
 
-    val vsApps = new Array[MemWriter](appCount)
+    val vsApps = new Array[MemWriter[String]](appCount)
     val results = (0 until appCount).map(_=>new SortedList).toArray
     t0 = System.currentTimeMillis()
     val tasks = for (i <- 0 until appCount) yield future[Unit] {
@@ -148,7 +153,6 @@ object CrossMatch {
           println("\r\n")
           i += 1
         }
-
         System.exit(0)
       case Failure(t) =>
         println(s"Search failed, error:$t")

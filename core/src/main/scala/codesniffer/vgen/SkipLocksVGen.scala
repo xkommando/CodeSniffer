@@ -13,12 +13,12 @@ import scala.collection.convert.wrapAsScala._
  *
  * Created by Bowen Cai on 5/17/2015.
  */
-class SkipLockMethodVisitor extends MethodVisitor {
+class SkipLocksVGen[F] extends BasicVGen[F] {
 
   val locks = new ThreadLocal[Int]()
   locks.set(0)
 
-  override protected def collectStmt(stmt: Statement, vec: CharacVec[String])(implicit ctx: Context): Unit = stmt match {
+  override def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = stmt match {
     // skip ExpressionStmt
     case est: ExpressionStmt =>
       collectNode(est.getExpression, vec)
@@ -34,10 +34,10 @@ class SkipLockMethodVisitor extends MethodVisitor {
     // filter others stmt
     case fst =>
       if (!ctx.config.filterStmt(fst))
-        continue(fst, vec)
+        putNode(fst, vec)
   }
 
-  override protected def continue(node: Node, vec: CharacVec[String])(implicit ctx: Context): Unit =
+  override protected def putNode(node: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit =
     node match {
       case call: MethodCallExpr =>
         call.getName match {
@@ -57,10 +57,20 @@ class SkipLockMethodVisitor extends MethodVisitor {
           collectNode(fb, vec)
           val lks2 = locks.get()
           if (lks2 >= lks && ct != null && ct.size > 0) // no unlock op, or got catch claus
-            vec.put("TryStmt")
-        } else vec.put("TryStmt")
+            vec.put("TryStmt".asInstanceOf[F])
+        } else vec.put("TryStmt".asInstanceOf[F])
 
-      //        // skip unlock call
+      case _ =>
+        vec.put(findNodeName(node).asInstanceOf[F])
+        val children = node.getChildrenNodes
+        if (children != null && children.size() > 0) {
+          for (n <- children)
+            collectNode(n, vec)
+        }
+    }
+}
+
+//        // skip unlock call
 //        if (locked.get()) {
 //          val ct = tryStmt.getCatchs
 //          if (ct != null && ct.size() > 0) vec.put("TryStmt")
@@ -78,13 +88,3 @@ class SkipLockMethodVisitor extends MethodVisitor {
 //            }
 //          }
 //        } else collectNode(tryStmt, vec)(ctx)
-
-      case _ =>
-        vec.put(findNodeName(node))
-        val children = node.getChildrenNodes
-        if (children != null && children.size() > 0) {
-          for (n <- children)
-            collectNode(n, vec)
-        }
-    }
-}

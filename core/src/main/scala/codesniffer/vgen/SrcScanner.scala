@@ -3,16 +3,17 @@ package codesniffer.vgen
 import java.io.{File, FileInputStream, FilenameFilter}
 
 import codesniffer.core.Location
+import codesniffer.search.C
 import com.github.javaparser.JavaParser
 
 /**
  * Created by Bowen Cai on 5/1/2015.
  */
-class SrcScanner(val context: Context) {
+class SrcScanner[F](val context: Context[F]) {
 
-  val methodVisitor = new SkipLockMethodVisitor
-  val classVisitor = new ClassVisitor
-  val fileVisitor = new FileVisitor
+  val methodVisitor = new C[F] // WeightedMVisitor //SkipLockMethodVisitor //
+  val classVisitor = new ClassVisitor[F]
+  val fileVisitor = new FileVisitor[F]
 
   // assemble visitors
   classVisitor.setMethodVisitor(methodVisitor)

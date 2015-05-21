@@ -83,9 +83,8 @@ class Indexer[T: ClassTag] {
     val2Index.clear()
   }
 
-  def appendTo(sb: mutable.StringBuilder): mutable.StringBuilder = index2Val.take(val2Index.size).addString(sb, " ")
+  def appendTo(sb: mutable.StringBuilder): mutable.StringBuilder = index2Val.take(val2Index.size).addString(sb, "\r\n")
   override def toString = appendTo(new StringBuilder(val2Index.size * 15)).toString()
-
 
   override def hashCode(): Int = {
     var result = 1

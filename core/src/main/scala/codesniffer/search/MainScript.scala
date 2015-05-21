@@ -50,7 +50,7 @@ object MainScript {
         || name.endsWith("Tests.java") // filter out test file
       )
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
-    val vecCollector = new MemWriter
+    val vecCollector = new MemWriter[String]
     val scanner = new SrcScanner(new Context(config, null, new Indexer[String], vecCollector))
     /** **************************************************************************
       *  generate vectors

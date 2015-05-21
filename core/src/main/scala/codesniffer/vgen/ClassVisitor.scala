@@ -9,15 +9,15 @@ import scala.collection.convert.wrapAsScala._
 /**
  * Created by Bowen Cai on 4/13/2015.
  */
-class ClassVisitor extends VoidVisitorAdapter[Context] {
+class ClassVisitor[F] extends VoidVisitorAdapter[Context[F]] {
 
-  @BeanProperty var methodVisitor: VoidVisitor[Context] = _
+  @BeanProperty var methodVisitor: VoidVisitor[Context[F]] = _
 
   import FileVisitor.NOP
-  var before  = NOP[ClassOrInterfaceDeclaration]
-  var after = NOP[ClassOrInterfaceDeclaration]
+  var before  = NOP[ClassOrInterfaceDeclaration, F]
+  var after = NOP[ClassOrInterfaceDeclaration, F]
 
-  override def visit(klass: ClassOrInterfaceDeclaration, ctx: Context): Unit =
+  override def visit(klass: ClassOrInterfaceDeclaration, ctx: Context[F]): Unit =
     if (!ctx.config.filterClass(klass)
       && !klass.isInterface) {
 

@@ -13,7 +13,7 @@ class Dummy[T] extends mutable.Builder[T, ArrayBuffer[T]] {
   def result(): ArrayBuffer[T] = ???
 }
 
-class CounterVec[T] extends CharacVec[T] {
+case class CounterVec[T](location: Location) extends CharacVec[T] {
 
   val funcCalls = new Dummy[FunctionCall]
 
@@ -28,12 +28,10 @@ class CounterVec[T] extends CharacVec[T] {
   def clear(): Unit = _count = 0
 
   def distance[A](other: CharacVec[A]): Double = ???
-  def location: Location = ???
   def length: Int = ???
   def apply(index: Int): Int = ???
   def apply(name: T): Int = ???
   def get(name: T): Option[Int] = ???
-  def remove(name: T, weight: Int): Int = ???
   def remove(name: T): Int = ???
   def update(name: T, weight: Int): Int = ???
   def merge(other: ArrayVec[T]): this.type = ???

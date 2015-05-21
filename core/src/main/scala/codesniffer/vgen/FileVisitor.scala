@@ -14,17 +14,17 @@ import scala.collection.convert.wrapAsScala._
  */
 object FileVisitor {
   // no operation
-  def NOP[A]: (A, Context)=>Unit = (a: A, c:Context)=>{}
+  def NOP[A, B]: (A, Context[B])=>Unit = (a: A, c:Context[B])=>{}
 }
-class FileVisitor extends VoidVisitorAdapter[Context] {
+class FileVisitor[F] extends VoidVisitorAdapter[Context[F]] {
 
-  @BeanProperty var classVisitor: VoidVisitor[Context] = _
+  @BeanProperty var classVisitor: VoidVisitor[Context[F]] = _
 
   import FileVisitor.NOP
-  var before = NOP[CompilationUnit]
-  var after = NOP[CompilationUnit]
+  var before = NOP[CompilationUnit, F]
+  var after = NOP[CompilationUnit, F]
 
-  override def visit(cu: CompilationUnit, ctx: Context): Unit = {
+  override def visit(cu: CompilationUnit, ctx: Context[F]): Unit = {
     // update location
     val pkgDec = cu.getPackage
     if (!ctx.config.filterPackage(pkgDec)) {

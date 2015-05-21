@@ -1,6 +1,7 @@
 package codesniffer.search
 
 import java.io.File
+import java.lang.reflect.Modifier
 import java.util
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
@@ -21,6 +22,7 @@ object NodeCount {
 
   val methodCount = new AtomicLong(0L)
 
+  // top level statement
   val topStmtCount = new AtomicLong(0L)
   val stmtGrp = new util.TreeMap[Int, Int]()
   val nodeCount = new AtomicLong(0L)
@@ -32,7 +34,8 @@ object NodeCount {
   def main(args: Array[String]): Unit = {
 
 //    var path = "D:\\__TEMP__\\src\\Src1.java"
-    var path: String = "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19"
+//    var path: String = "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19"
+    var path: String = "E:\\research\\top\\spring-framework"
     //    var path: String = _
 //    if (args != null && args.length == 1) {
 //      path = args(0)
@@ -44,21 +47,18 @@ object NodeCount {
 
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
-    // filter out:
-    // package file
-    // test classes
-    // meaningless statements
     val config = new Config
     config.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
       )
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
+//    config.filterMethod = (m: MethodDeclaration) => !Modifier.isPublic(m.getModifiers)
 
-    val vecCollector = new MemWriter
+    val vecCollector = new MemWriter[String]
     val scanner = new SrcScanner(new Context(config, null, new Indexer[String], vecCollector))
 
-    scanner.methodVisitor.before = (method: MethodDeclaration, v: ArrayVec[_], c: Context)=> {
+    scanner.methodVisitor.before = (method: MethodDeclaration, c: Context[String])=> {
       methodCount.incrementAndGet()
       val _stmtNum = method.getBody.getStmts.size()
       topStmtCount.addAndGet(_stmtNum)
@@ -66,8 +66,10 @@ object NodeCount {
         val old = stmtGrp.getOrDefault(_stmtNum, 0)
         stmtGrp.update(_stmtNum, old + 1)
       }
+      new CounterVec[String](c.currentLocation)
     }
-    scanner.methodVisitor.after = (method: MethodDeclaration, last: ArrayVec[_], c: Context)=> {
+
+    scanner.methodVisitor.after = (method: MethodDeclaration, last: CharacVec[String], c: Context[String])=> {
       val c = last.count
       nodeCount.addAndGet(c)
       nodeGrp.synchronized{
@@ -79,6 +81,7 @@ object NodeCount {
         maxNodeLoc.set(last.location)
       }
       vecCollector.clear()
+      last
     }
 
     dir match {
@@ -99,5 +102,6 @@ object NodeCount {
     nodeGrp.foreach(println)
 
     println(s"max node ${maxNodeNumber.get()}, appeared at $maxNodeLoc")
+    println(scanner.context.indexer)
   }
 }

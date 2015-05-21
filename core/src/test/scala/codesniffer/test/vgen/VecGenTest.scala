@@ -42,15 +42,19 @@ class VecGenTest {
     vecs.foreach(println)
   }
 
-  def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter = {
+  def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter[String] = {
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
 
-    val vs1 = new MemWriter
+    val vs1 = new MemWriter[String]
     val scanner1 = new SrcScanner(new Context(cfg, null, idx, vs1))
     // save exact source to vector, for manually check
     scanner1.methodVisitor.before =
-      (m: MethodDeclaration, v: ArrayVec[_], ctx: Context)=> v.data = Some(m.toString)
+      (m: MethodDeclaration, ctx: Context[String])=> {
+      val v = new CounterVec[String](ctx.currentLocation)
+      v.data = Some(m.toString)
+      v
+    }
 
     dir match {
       case where if where.isDirectory => scanner1.scanDir(where, recursive = true)
@@ -119,7 +123,7 @@ class VecGenTest {
 //    val ctx = new Context(new Config(), new Location("AbstractAsyncTableRendering.java", 0, scope), new Indexer, new MemWriter)
     ctx.config.filterNode = (node: Node)=> node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
 
-    val mv = new MethodVisitor
+    val mv = new BasicVGen
     val cv = new ClassVisitor
 
     mv.setClassVisitor(cv)
@@ -131,9 +135,9 @@ class VecGenTest {
       }
 
       println(ctx.indexer)
-      ctx.vecWriter.asInstanceOf[MemWriter].foreach(println)
+      ctx.vecWriter.asInstanceOf[MemWriter[String]].foreach(println)
 
-      val ls = (ctx.vecWriter.asInstanceOf[MemWriter]).result()
+      val ls = (ctx.vecWriter.asInstanceOf[MemWriter[String]]).result()
       val totalNodes =
       println("Method count: " + ls.length)
       println("Node kind: " + ctx.indexer.maxIndex + 1)
@@ -142,7 +146,7 @@ class VecGenTest {
       })
 
       //---------------------
-      val sampleVec = ctx.vecWriter.asInstanceOf[MemWriter](1).asInstanceOf[ArrayVec[String]]
+      val sampleVec = ctx.vecWriter.asInstanceOf[MemWriter[String]](1).asInstanceOf[ArrayVec[String]]
       println(sampleVec.methodName + "   " + sampleVec.intern.count(_=>true))
       println(
         sampleVec.intern.foldLeft(0){(sum: Int, i)=>sum + i}

@@ -48,8 +48,6 @@ trait CharacVec[T] {
     this
   }
 
-  def remove(name: T, weight: Int): Int
-
   /**
    * redece to zero
    * @param name
