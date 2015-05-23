@@ -36,7 +36,7 @@ final case class MethodScope(name: String, parent: Scope) extends Scope {
 }
 
 
-case class Location(file: String, line: Int, scope: Scope) {
+case class Location(file: String, lineBegin: Int, lineEnd: Int, scope: Scope) {
 
   /**
    *
@@ -46,21 +46,20 @@ case class Location(file: String, line: Int, scope: Scope) {
    * @param ln
    * @return
    */
-  def enterClass(name: String, ln: Int): Location = {
+  def enterClass(name: String, lnB: Int, lnE: Int): Location = {
     val ns = new ClassScope(name, this.scope)
-    copy(line = ln, scope = ns)
+    copy(lineBegin = lnB, lineEnd = lnE, scope = ns)
   }
 
-  def enterClass(name: String, nfile: String, ln: Int): Location = {
+  def enterClass(name: String, nfile: String, lnB: Int, lnE: Int): Location = {
     val ns = new ClassScope(name, this.scope)
-    copy(file = nfile, line = ln, scope = ns)
+    copy(file = nfile, lineBegin = lnB, lineEnd = lnE, scope = ns)
   }
 
-  def enterMethod(name: String, ln: Int) =
-    copy(scope = new MethodScope(name, this.scope), line = ln)
+  def enterMethod(name: String, lnB: Int, lnE: Int) =
+    copy(scope = new MethodScope(name, this.scope), lineBegin = lnB, lineEnd = lnE)
 
-
-  override def toString = s"$file ln:$line\t$scope"
+  override def toString = s"$file ln:$lineBegin to $lineEnd\t$scope"
 
 //  /**
 //   * pop tail and leave this scope

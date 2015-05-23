@@ -3,10 +3,9 @@ package codesniffer.vgen
 import java.lang.reflect.Modifier
 
 import codesniffer.core._
-import codesniffer.vgen.Context
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.`type`._
-import com.github.javaparser.ast.body.{MethodDeclaration, ClassOrInterfaceDeclaration}
+import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
 import com.github.javaparser.ast.expr._
 import com.github.javaparser.ast.stmt.{BlockStmt, ExpressionStmt, Statement}
 import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
@@ -15,15 +14,20 @@ import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
 
 /**
+ *  generate vector in a top-down approche
+ *
  * Created by Bowen Cai on 4/10/2015.
  */
-object BasicVGen {
+object BasicVecGen {
 
+  @inline
   def newVec[F](m: MethodDeclaration, ctx: Context[F]): CharacVec[F] =
   new ArrayVec[F](ctx.indexer, ctx.currentLocation, m.getName, extractSignature(m)).asInstanceOf[CharacVec[F]]
 
-  def passVec[F](m: MethodDeclaration, v: CharacVec[F], ctx: Context[F]): CharacVec[F] = v
+  @inline
+  def writeVec[F](m: MethodDeclaration, v: CharacVec[F], ctx: Context[F]): Unit = ctx.vecWriter.write(v)
 
+  @inline
   def extractSignature(m: MethodDeclaration): MethodDescriptor = {
 
     val paramTypeNames = if (null == m.getParameters || m.getParameters.size() == 0) None
@@ -40,6 +44,7 @@ object BasicVGen {
       throwNames)
   }
 
+  @inline
   def extractTypeName(tp: Type): String = tp match {
     case a : ClassOrInterfaceType =>
       a.getName
@@ -79,12 +84,12 @@ object BasicVGen {
   }
 }
 
-class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
+class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
 
   @BeanProperty var classVisitor: VoidVisitor[Context[F]] = _
 
-  var before: (MethodDeclaration, Context[F])=> CharacVec[F] = BasicVGen.newVec[F]
-  var after: (MethodDeclaration, CharacVec[F], Context[F])=> CharacVec[F]  = BasicVGen.passVec[F]
+  var before: (MethodDeclaration, Context[F])=> CharacVec[F] = BasicVecGen.newVec[F]
+  var after: (MethodDeclaration, CharacVec[F], Context[F])=> Unit = BasicVecGen.writeVec[F]
 
   override def visit(method: MethodDeclaration, ctx: Context[F]): Unit =
     if (!ctx.config.filterMethod(method)) {
@@ -96,7 +101,7 @@ class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
         val methodName = method.getName
 
         val prevLoc = ctx.currentLocation
-        ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine)
+        ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine, method.getEndLine)
         var vec = before(method, ctx)
 
         try {
@@ -105,22 +110,23 @@ class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
           //          val c1 = counter.count
 
           collectNodes(method.getBody.getStmts, vec)(ctx)
+
         } catch {
           case e: Exception => throw new RuntimeException(s"Could not travel though method ${ctx.currentLocation}", e)
         }
-        vec = after(method, vec, ctx)
-        ctx.vecWriter.write(vec)
+        after(method, vec, ctx)
         ctx.currentLocation = prevLoc
       }
     }
 
+  @inline
   def collectNodes[E <:Node](nodes: java.util.List[E], vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
     if (nodes != null && nodes.size > 0)
       for (n <- nodes)
         collectNode(n, vec)(ctx)
   }
 
-  protected def collectNode(pnode: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
+  def collectNode(pnode: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
     val cfg = ctx.config
     if (!cfg.filterNode(pnode)) {
       if (ctx.config.skipNode(pnode)) {
@@ -142,7 +148,6 @@ class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
               else
                 collectExpr(expr, vec)
             }
-
           // continue with new class
           case tp: ClassOrInterfaceDeclaration if !tp.isInterface =>
             classVisitor.visit(tp, ctx)
@@ -152,12 +157,15 @@ class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
     }
   }
 
+  @inline
   protected def collectExpr(expr: Expression, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = expr match {
       // skip enclosed expr
-    case e: EnclosedExpr => collectNodes(e.getChildrenNodes, vec)
+    case e: EnclosedExpr =>
+      collectExpr(e.getInner, vec)
     case ot => putNode(ot, vec)
   }
 
+  @inline
   protected def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = stmt match {
     // skip ExpressionStmt
     case est: ExpressionStmt =>
@@ -171,6 +179,7 @@ class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
         putNode(fst, vec)
   }
 
+  @inline
   protected def putNode(node: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit =
     node match {
       case call: MethodCallExpr =>
@@ -180,14 +189,16 @@ class BasicVGen[F] extends VoidVisitorAdapter[Context[F]] {
         collectNodes(node.getChildrenNodes, vec)
     }
 
+  @inline
   protected[codesniffer] def addMethodCall(call: MethodCallExpr, vec: CharacVec[F]): Unit = {
     vec.put("MethodCallExpr".asInstanceOf[F])
-    val scope = BasicVGen.findCallee(call.getScope)
+    val scope = BasicVecGen.findCallee(call.getScope)
     val methodName = call.getName
     //          val lsExps = call.getArgs
     vec.funcCalls += (scope -> methodName)
   }
 
+  @inline
   protected[codesniffer] def findNodeName(node: Node): String = node match {
     case a: BooleanLiteralExpr =>
       if (a.getValue) "__BOOL_TRUE___"

@@ -1,6 +1,6 @@
 package codesniffer.core
 
-import codesniffer.hash.{D, Session}
+import codesniffer.hash.{Defs, Session}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -68,7 +68,7 @@ object MathUtils {
   @inline
   def computeMfromK_P(k: Int, successProb: Double): Int = {
     import StrictMath._
-    val mu = 1 - pow(computeP(D.W_default, 1), k / 2)
+    val mu = 1 - pow(computeP(Defs.W_default, 1), k / 2)
     val p = successProb
     val d = (1 - mu) / (1 - p) * 1 / log(1 / mu) * pow(mu, -1 / (1 - mu))
     val y = log(d)
@@ -86,9 +86,9 @@ object MathUtils {
       var h = 0L
       for (i <- 0 until length) {
         h += a1(i) * a2(i)
-        h = (h & D.TWO_TO_32_MINUS_1) + 5 * (h >>> 32)
-        if (h >= D.UH_PRIME_DEFAULT)
-          h -= D.UH_PRIME_DEFAULT
+        h = (h & Defs.TWO_TO_32_MINUS_1) + 5 * (h >>> 32)
+        if (h >= Defs.UH_PRIME_DEFAULT)
+          h -= Defs.UH_PRIME_DEFAULT
       }
       h.toInt
   }
@@ -107,7 +107,7 @@ object MathUtils {
       sample += session.vectors(i)
     }
 
-    val paramM = computeMfromK_P(D.K_default, session.successProb)
+    val paramM = computeMfromK_P(Defs.K_default, session.successProb)
     val paramL = paramM * (paramM - 1) / 2
 
 

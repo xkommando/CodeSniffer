@@ -14,6 +14,8 @@ import scala.collection.convert.wrapAsScala._
  */
 object FileVisitor {
   // no operation
+
+  @inline
   def NOP[A, B]: (A, Context[B])=>Unit = (a: A, c:Context[B])=>{}
 }
 class FileVisitor[F] extends VoidVisitorAdapter[Context[F]] {

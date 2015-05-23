@@ -27,6 +27,36 @@ import scala.util.Random
 class VecGenTest {
 
   @Test
+  def testSlicer: Unit ={
+//    val path = "E:\\Dev\\scala\\TestScala\\src\\main\\java\\testsrc\\Src3.java"
+    val path = "D:\\__TEMP__\\src\\ClassReader.java"
+    val cfg = new Config
+    cfg.filterDirName = (name: String) => (
+      name.equals("package-info.java") // filter out package file
+        || name.endsWith("Test.java") // filter out test file
+      )
+    cfg.filterNode = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
+    val idx = new Indexer[String]
+
+    val dir = new File(path)
+    require(dir.exists() && dir.canRead)
+
+    val vecList = new MemWriter[String]
+    val scanner1 = new SlicerScanner[String](new Context(cfg, null, null, idx, vecList))
+
+    scanner1.methodVisitor.lowerBound = 10
+    scanner1.methodVisitor.upperBound = 20
+
+    dir match {
+      case where if where.isDirectory => scanner1.scanDir(where, recursive = true)
+      case src if src.isFile => scanner1.scanFile(src)
+    }
+    println(vecList.size)
+//    vecList.foreach(println)
+
+  }
+
+  @Test
   def t_filter_locks: Unit = {
     val path = "E:\\Dev\\scala\\TestScala\\src\\main\\java\\testsrc\\Src3.java"
     val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
@@ -47,7 +77,7 @@ class VecGenTest {
     require(dir.exists() && dir.canRead)
 
     val vs1 = new MemWriter[String]
-    val scanner1 = new SrcScanner(new Context(cfg, null, idx, vs1))
+    val scanner1 = new SrcScanner(new Context(cfg, null, null, idx, vs1))
     // save exact source to vector, for manually check
     scanner1.methodVisitor.before =
       (m: MethodDeclaration, ctx: Context[String])=> {
@@ -119,11 +149,11 @@ class VecGenTest {
     else pkg.getName
 
     val scope = new PackageScope(pkgName)
-    val ctx = new Context(new Config(), new Location("Src1.java", 0, scope), new Indexer, new MemWriter)
+    val ctx = new Context(new Config(), new Location("Src1.java", 0, 0, scope), null, new Indexer, new MemWriter)
 //    val ctx = new Context(new Config(), new Location("AbstractAsyncTableRendering.java", 0, scope), new Indexer, new MemWriter)
     ctx.config.filterNode = (node: Node)=> node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
 
-    val mv = new BasicVGen
+    val mv = new BasicVecGen
     val cv = new ClassVisitor
 
     mv.setClassVisitor(cv)

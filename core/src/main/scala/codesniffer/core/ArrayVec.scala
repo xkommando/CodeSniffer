@@ -126,7 +126,7 @@ case class ArrayVec[T](indexer: Indexer[T],
     val sb = new StringBuilder(1024, location.toString).append('\n')
     sb.append(methodName).append(':')
     descriptor.appendTo(sb).append('\t').append(_count).append(" nodes\n")
-    vector.take(indexer.maxIndex + 1).addString(sb, " ")
+//    vector.take(indexer.maxIndex + 1).addString(sb, " ")
     sb.toString()
   }
 

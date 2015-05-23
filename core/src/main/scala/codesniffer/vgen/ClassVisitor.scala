@@ -23,7 +23,7 @@ class ClassVisitor[F] extends VoidVisitorAdapter[Context[F]] {
 
       // update location
       val prevLoc = ctx.currentLocation
-      ctx.currentLocation = ctx.currentLocation.enterClass(klass.getName, klass.getBeginLine)
+      ctx.currentLocation = ctx.currentLocation.enterClass(klass.getName, klass.getBeginLine, klass.getEndLine)
       before(klass, ctx)
 
       for (member <- klass.getMembers) member match {

@@ -4,7 +4,7 @@ import java.io.File
 import java.util
 
 import codesniffer.core.{CharacVec, Indexer, MemWriter}
-import codesniffer.vgen.{BasicVGen, Config, Context, SrcScanner}
+import codesniffer.vgen._
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.ThisExpr
@@ -15,8 +15,8 @@ import scala.concurrent._
 import scala.util.{Failure, Success}
 
 /**
- * Created by Bowen Cai on 5/15/2015.
- */
+* Created by Bowen Cai on 5/15/2015.
+*/
 object CrossMatch {
 
   type SortedList = util.TreeMap[Double, (CharacVec[String], CharacVec[String])]
@@ -25,13 +25,19 @@ object CrossMatch {
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
     val vs = new MemWriter[String]
-    val scanner = new SrcScanner(new Context[String](cfg, null, idx, vs))
+    val scanner = new SrcScanner(new Context[String](cfg, null, null, idx, vs))
     // save exact source to vector, for manually check
-    scanner.methodVisitor.before =
-      (m: MethodDeclaration, ctx: Context[String])=> {
-        val v = BasicVGen.newVec[String](m, ctx)
-        v.data = Some(m.toString)
-        v
+//    scanner.methodVisitor.before =
+//      (m: MethodDeclaration, ctx: Context[String])=> {
+//        val v = BasicVecGen.newVec[String](m, ctx)
+//        v
+//      }
+    scanner.methodVisitor.after =
+      (m: MethodDeclaration, v: CharacVec[String], ctx: Context[String]) => {
+        if (v.count > 20) {
+          v.data = Some(m.toString.intern())
+          ctx.vecWriter.write(v)
+        }
       }
 
     dir match {
@@ -58,21 +64,21 @@ object CrossMatch {
     var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
 //    var path2lib: String = "E:\\research\\top\\jdk-1.7\\java\\util\\concurrent"
     var path2Apps = Array("E:\\\\research\\\\top\\\\h2-1.4.187-sources",
-      "E:\\research\\top\\derby",
-      "E:\\research\\top\\Openfire",
-      "E:\\research\\top\\spring-framework",
-      "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19")
+      "E:\\research\\top\\derby")//,
+//      "E:\\research\\top\\Openfire",
+//      "E:\\research\\top\\spring-framework",
+//      "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19")
 
     var resultSize = 20
 
-    if (args != null && args.length > 2) {
-      resultSize = Integer.parseInt(args(0))
-      path2lib = args(1)
-      path2Apps = args.drop(2)
-    } else {
-      println("Usage: <result_size> <path-to-library> <path-to-app> <path-to-app> ...")
-      System.exit(1)
-    }
+//    if (args != null && args.length > 2) {
+//      resultSize = Integer.parseInt(args(0))
+//      path2lib = args(1)
+//      path2Apps = args.drop(2)
+//    } else {
+//      println("Usage: <result_size> <path-to-library> <path-to-app> <path-to-app> ...")
+//      System.exit(1)
+//    }
 
     println(s"Matching library $path2lib against applications:")
     path2Apps.foreach(println)
@@ -85,8 +91,6 @@ object CrossMatch {
     val appCount = path2Apps.length
     val procCount = Runtime.getRuntime.availableProcessors()
     implicit val _exe = ExecutionContext.fromExecutor(java.util.concurrent.Executors.newFixedThreadPool(procCount)).prepare()
-
-    val _skipSync = (stmt: Statement)=> stmt.isInstanceOf[SynchronizedStmt]
 
     val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
     val fileNameFilter = (name: String) => (

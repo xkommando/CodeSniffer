@@ -9,15 +9,16 @@ import scala.collection.convert.wrapAsScala._
 
 /**
  *
- * simply skip lock try finally unlock pattern
+ * simply skip SynchronizedStmt and lock-try-finally-unlock pattern
  *
  * Created by Bowen Cai on 5/17/2015.
  */
-class SkipLocksVGen[F] extends BasicVGen[F] {
+class SkipLocksVecGen[F] extends BasicVecGen[F] {
 
   val locks = new ThreadLocal[Int]()
   locks.set(0)
 
+  @inline
   override def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = stmt match {
     // skip ExpressionStmt
     case est: ExpressionStmt =>

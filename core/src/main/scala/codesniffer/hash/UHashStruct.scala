@@ -29,15 +29,15 @@ class UHashStruct(hashTable: Array[GBucket],
 
     val combineAt = (idx: Int) => {
       val h1 = bucketVec1(idx)
-      val h2 = bucketVec1(idx + D.UHF_NUMBER_OF_HASHES)
+      val h2 = bucketVec1(idx + Defs.UHF_NUMBER_OF_HASHES)
       val h = h1.toLong + h2.toLong
-      (if (h > D.UH_PRIME_DEFAULT)
-        h - D.UH_PRIME_DEFAULT
+      (if (h > Defs.UH_PRIME_DEFAULT)
+        h - Defs.UH_PRIME_DEFAULT
       else h).toInt
     }
 
-    val hIndex = combineAt(D.UHF_MAIN_INDEX) % hashTable.length
-    val control1 = combineAt(D.UHF_CONTROL1_INDEX)
+    val hIndex = combineAt(Defs.UHF_MAIN_INDEX) % hashTable.length
+    val control1 = combineAt(Defs.UHF_CONTROL1_INDEX)
 
     var p = hashTable(hIndex)
     while (p != null && p.controlValue1 != control1) p = p.next

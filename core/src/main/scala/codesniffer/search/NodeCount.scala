@@ -16,8 +16,8 @@ import scala.collection.convert.wrapAsScala._
 
 
 /**
- * Created by Bowen Cai on 5/1/2015.
- */
+* Created by Bowen Cai on 5/1/2015.
+*/
 object NodeCount {
 
   val methodCount = new AtomicLong(0L)
@@ -35,7 +35,8 @@ object NodeCount {
 
 //    var path = "D:\\__TEMP__\\src\\Src1.java"
 //    var path: String = "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19"
-    var path: String = "E:\\research\\top\\spring-framework"
+//    var path: String = "E:\\research\\top\\spring-framework"
+    var path = "E:\\research\\top\\guava"
     //    var path: String = _
 //    if (args != null && args.length == 1) {
 //      path = args(0)
@@ -51,12 +52,13 @@ object NodeCount {
     config.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
+        || name.endsWith("Test.java")
       )
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
-//    config.filterMethod = (m: MethodDeclaration) => !Modifier.isPublic(m.getModifiers)
+    config.filterMethod = (m: MethodDeclaration) => !Modifier.isPublic(m.getModifiers)
 
     val vecCollector = new MemWriter[String]
-    val scanner = new SrcScanner(new Context(config, null, new Indexer[String], vecCollector))
+    val scanner = new SrcScanner(new Context(config, null, null, new Indexer[String], vecCollector))
 
     scanner.methodVisitor.before = (method: MethodDeclaration, c: Context[String])=> {
       methodCount.incrementAndGet()
@@ -80,15 +82,13 @@ object NodeCount {
         maxNodeNumber.set(c)
         maxNodeLoc.set(last.location)
       }
-      vecCollector.clear()
-      last
     }
 
     dir match {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
       case src if src.isFile => scanner.scanFile(src)
     }
-    
+
     println(s"method count: $methodCount, top level stmt count: $topStmtCount")
     println(s"stmt per method: ${topStmtCount.doubleValue() / methodCount.doubleValue()}")
 

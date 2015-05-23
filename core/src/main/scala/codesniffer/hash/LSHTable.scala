@@ -25,14 +25,14 @@ class LSHTable(val param: HashParam, val random: Random, nPointsEstimate: Int) {
   //    fill hashedBuckets
 
   private val _hashedBuckets : Array[UHashStruct] = {
-    val mainH = (0 until param.paramK).map(_=> random.nextInt(1, D.MAX_HASH_RND)).toArray
-    val controlH = (0 until param.paramK).map(_=> random.nextInt(1, D.MAX_HASH_RND)).toArray
+    val mainH = (0 until param.paramK).map(_=> random.nextInt(1, Defs.MAX_HASH_RND)).toArray
+    val controlH = (0 until param.paramK).map(_=> random.nextInt(1, Defs.MAX_HASH_RND)).toArray
 
     (0 until param.paramL).map{_ =>
       new UHashStruct(
         new Array[GBucket](nPointsEstimate),
         new Array[Point](nPointsEstimate),
-        D.UH_PRIME_DEFAULT,
+        Defs.UH_PRIME_DEFAULT,
         mainH,
         controlH)
     }.toArray
@@ -59,7 +59,7 @@ class LSHTable(val param: HashParam, val random: Random, nPointsEstimate: Int) {
 
   // row * col = nHFTuples * N_PRECOMPUTED_HASHES_NEEDED (4)
   val _precomputedHashesOfULSHs: Array[Array[Int]] =
-    (0 until nHFTuples).map(_=> new Array[Int](D.N_PRECOMPUTED_HASHES_NEEDED)).toArray
+    (0 until nHFTuples).map(_=> new Array[Int](Defs.N_PRECOMPUTED_HASHES_NEEDED)).toArray
 
   // length: dimension
   private val _reducedPoint: Array[Double] = new Array[Double](param.dimension)

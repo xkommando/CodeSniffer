@@ -3,7 +3,7 @@ package codesniffer.hash
 /**
  * Created by Bowen Cai on 4/25/2015.
  */
-object D {
+object Defs {
 
   val W_default = 4.0
   val K_default = 16
