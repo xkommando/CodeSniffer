@@ -17,6 +17,8 @@ trait CharacVec[T] {
   var data: Option[AnyRef] = None
   val funcCalls: Builder[FunctionCall, ArrayBuffer[FunctionCall]]
 
+//  val defaultWeight = 1
+
   def distance[A](other: CharacVec[A]): Double
   def location: Location
 
@@ -61,7 +63,7 @@ trait CharacVec[T] {
    * merge one vector to this one, i.e., accumulate occurrence count
    * @param other
    */
-  def merge(other: ArrayVec[T]): this.type
+  def merge(other: CharacVec[T]): this.type
 
   def clear(): Unit
 }

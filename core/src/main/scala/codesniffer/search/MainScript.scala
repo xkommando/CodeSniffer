@@ -81,6 +81,8 @@ object MainScript {
 
     val t1 = System.currentTimeMillis()
 
+    val threshold = config.distThreshold
+
     var right = vecCount
     val dprocCount = procCount.toDouble
     val tasks = for (i <- 1 to procCount) yield future[SortedList] {
@@ -96,7 +98,7 @@ object MainScript {
           if (ac > 20 && bc > 20 && math.abs(ac - bc) < 60) { // this could significantly reduce comparison
 //            val dist = a.dist2(b)
             val dist = a.math.EuclideanDist(b)
-            if (dist < 20)
+            if (dist < threshold)
               sortedList.put(dist, (a, b))
 
 //            val dist = a.math.CosineDist(b)

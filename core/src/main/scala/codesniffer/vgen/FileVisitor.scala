@@ -38,7 +38,6 @@ class FileVisitor[F] extends VoidVisitorAdapter[Context[F]] {
           case _ => nameExp.getName
         }
       } else ""
-
       val nc = new PackageScope(pkgName)
       val prevLoc = ctx.currentLocation
       ctx.currentLocation = ctx.currentLocation.copy(scope = nc)

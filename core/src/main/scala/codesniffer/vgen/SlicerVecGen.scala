@@ -2,7 +2,7 @@ package codesniffer.vgen
 
 import java.lang.reflect.Modifier
 
-import codesniffer.core.{CharacVec, ArrayVec}
+import codesniffer.core.{WeightedVec, CharacVec, ArrayVec}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.stmt.Statement
@@ -44,7 +44,6 @@ case class SlicerVecGen[F](vecGen: BasicVecGen[F], counter: SubTreeCounter[F]) e
               genVec(head, ctx)(method)
             else search(head, ctx)(method)
           }
-          search(method.getBody, ctx)(method)
         } catch {
           case e: Exception => throw new RuntimeException(s"Could not travel though method ${ctx.currentLocation}", e)
         }
@@ -59,6 +58,13 @@ case class SlicerVecGen[F](vecGen: BasicVecGen[F], counter: SubTreeCounter[F]) e
     else 1
   }
 
+  /**
+   *
+   * @param node node number under this node is greater than upperBound
+   * @param ctx
+   * @param method
+   * @return
+   */
   @inline
   protected def search(node: Node, ctx: Context[F])(implicit method: MethodDeclaration): Unit = {
     var kids = node.getChildrenNodes
@@ -138,7 +144,9 @@ case class SlicerVecGen[F](vecGen: BasicVecGen[F], counter: SubTreeCounter[F]) e
   protected def genVec(node: Node, ctx: Context[F])(implicit method: MethodDeclaration): Unit = {
     val prev = ctx.currentLocation
     ctx.currentLocation = ctx.currentLocation.copy(lineBegin = node.getBeginLine, lineEnd = node.getEndLine)
+//    val v = new WeightedVec[F](vecGen.before(method, ctx))
     val v = vecGen.before(method, ctx)
+
     ctx.currentLocation = prev
 
     val nodeCode = node.toString.intern()

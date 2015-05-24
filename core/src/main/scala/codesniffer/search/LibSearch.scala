@@ -4,7 +4,7 @@ import java.io.File
 import java.lang.reflect.Modifier
 import java.util
 
-import codesniffer.core.{ArrayVec, CharacVec, MemWriter, Indexer}
+import codesniffer.core._
 import codesniffer.vgen.{Context, SlicerScanner, Config}
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
@@ -19,16 +19,19 @@ import scala.util.{Failure, Success}
 /**
  * Created by Bowen Cai on 5/22/2015.
  */
-object SS {
+object LibSearch {
 
   type SortedList = util.TreeMap[Double, (CharacVec[String], CharacVec[String])]
 
 
   def main (args: Array[String]): Unit = {
 
-//    var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
+    val rt = Runtime.getRuntime
+    val procNum = rt.availableProcessors() * 3 / 2
+
+    var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
 //    var path2lib = "E:\\research\\top\\guava\\guava\\src\\com\\google\\common\\util\\concurrent"
-    var path2lib = "E:\\research\\top\\jdk-1.7\\java\\util\\concurrent"
+//    var path2lib = "E:\\research\\top\\jdk-1.7\\java\\util\\concurrent"
 //    var path2App: String = "E:\\research\\top\\derby\\java"
     var path2App = "E:\\research\\top\\h2-1.4.187-sources"
     var resultSizePerFunc = 8
@@ -53,16 +56,21 @@ object SS {
     val _indexer = new Indexer[String]
 
     val vsLib = CrossMatch.vgen(path2lib, _indexer, _libConfig)
-    println(s"Library $path2lib processed, ${vsLib.size} generated")
+    val useCache = rt.maxMemory() > 1073741824 * (3 + vsLib.size / 1024)
 
-//    val searchedApp = new mutable.HashMap[(Int, Int), MemWriter[String]]
-//    searchedApp.sizeHint(9999)
+    println(s"Library $path2lib processed, ${vsLib.size} generated. Cache ${if (useCache) "opened" else "closed" }")
 
+    val searchedApp = if (useCache) {
+      val hs = new mutable.HashMap[(Int, Int), MemWriter[String]]
+      hs.sizeHint(9999)
+      hs
+    } else null
+
+
+    val threshold = _appCfg.distThreshold
     val appDir = new File(path2App)
-
     val summary = new SortedList
 
-    val procNum = Runtime.getRuntime.availableProcessors() * 3 / 2
     implicit val _exe = ExecutionContext.fromExecutor(java.util.concurrent.Executors.newFixedThreadPool(procNum)).prepare()
     println(s"searching applications with $procNum threads")
     val length = vsLib.length
@@ -74,10 +82,10 @@ object SS {
       for (i <- left until right) {
         val libFunc = vsLib(i)
         val libC = libFunc.count
-        val lower = libC * 8 / 10
-        val upper = libC * 4 / 3
+        val lower: Int = libC * 8 / 10
+        val upper: Int = libC * 5 / 3
 
-        val appVecList = {
+        def newSearch(): MemWriter[String] = {
           val ls = new MemWriter[String]
           ls.sizeHint(1024)
           val scanner = new SlicerScanner[String](new Context(_appCfg, null, null, _indexer, ls))
@@ -89,34 +97,27 @@ object SS {
           }
           ls
         }
-        /// WARN: racing!!!
-//        val appVecList = searchedApp.getOrElse((lower, upper),{
-//          val ls = new MemWriter[String]
-//          ls.sizeHint(9999)
-//          val scanner = new SlicerScanner[String](new Context(_appCfg, null, null, _indexer, ls))
-//          scanner.methodVisitor.vecGen.after =
-//            (m: MethodDeclaration, v: CharacVec[String], ctx: Context[String]) => {
-//              if (v.count > 20) {
-////                v.data = Some(m.toString.intern())
-//                ctx.vecWriter.write(v)
-//              }
-//            }
-//          scanner.methodVisitor.lowerBound = lower
-//          scanner.methodVisitor.upperBound = upper
-//          appDir match {
-//            case where if where.isDirectory => scanner.scanDir(where, recursive = true)
-//            case src if src.isFile => scanner.scanFile(src)
-//          }
-//          searchedApp.put((lower, upper), ls)
-//          ls
-//        })
+        val appVecList = if (useCache) {
+          searchedApp.getOrElse((lower, upper), {
+            val nls = newSearch()
+            searchedApp.put((lower, upper), nls)
+            nls
+          })
+        } else newSearch()
+
         if (appVecList.size > 0) {
           val result = new SortedList
             for (appFunc <- appVecList) {
               val appC = appFunc.count
               if (math.abs(appC - libC) < 40) {
-                val dist = libFunc.asInstanceOf[ArrayVec[String]].math.EuclideanDist(appFunc.asInstanceOf[ArrayVec[String]])
-                if (dist < 20)
+                val v1 = libFunc.asInstanceOf[ArrayVec[String]]
+//                val v2: ArrayVec[String] = appFunc match {
+//                  case a: ArrayVec[String] =>a
+//                  case w: WeightedVec[String] => w.underlying.asInstanceOf[ArrayVec[String]]
+//                }
+//                val dist = v1.math.EuclideanDist(v2)
+                val dist = v1.math.EuclideanDist(appFunc.asInstanceOf[ArrayVec[String]])
+                if (dist < threshold)
                   result.put(dist, (libFunc, appFunc)) // .asInstanceOf[CharacVec[String]]))
               }
             }
@@ -124,10 +125,10 @@ object SS {
           println(s"app searched for ${libFunc.location.scope}")
           summary.putAll(result)
         }
-        System.gc()
+        rt.gc()
       } // for apps
-      System.gc()
-      System.gc()
+      rt.gc()
+      rt.gc()
       println(s"lib $left to $right searched\r\n")
     }
 
@@ -155,7 +156,27 @@ object SS {
         System.exit(0)
     }
 
-
-
   }
+
 }
+/// WARN: racing!!!
+//        val appVecList = searchedApp.getOrElse((lower, upper),{
+//          val ls = new MemWriter[String]
+//          ls.sizeHint(9999)
+//          val scanner = new SlicerScanner[String](new Context(_appCfg, null, null, _indexer, ls))
+//          scanner.methodVisitor.vecGen.after =
+//            (m: MethodDeclaration, v: CharacVec[String], ctx: Context[String]) => {
+//              if (v.count > 20) {
+////                v.data = Some(m.toString.intern())
+//                ctx.vecWriter.write(v)
+//              }
+//            }
+//          scanner.methodVisitor.lowerBound = lower
+//          scanner.methodVisitor.upperBound = upper
+//          appDir match {
+//            case where if where.isDirectory => scanner.scanDir(where, recursive = true)
+//            case src if src.isFile => scanner.scanFile(src)
+//          }
+//          searchedApp.put((lower, upper), ls)
+//          ls
+//        })

@@ -19,23 +19,30 @@ class SkipLocksVecGen[F] extends BasicVecGen[F] {
   locks.set(0)
 
   @inline
-  override def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = stmt match {
-    // skip ExpressionStmt
-    case est: ExpressionStmt =>
-      collectNode(est.getExpression, vec)
-    // skip BlockStmt
-    case bst: BlockStmt =>
-      collectNodes(bst.getStmts, vec)
-      // skip synchronized
-    case syncStmt: SynchronizedStmt =>
-      val bk = syncStmt.getBlock
-      if (bk != null)
-      collectNodes(bk.getStmts, vec)
+  override def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
+    if (!ctx.config.filterStmt(stmt)) {
+      if (ctx.config.skipStmt(stmt))
+        collectNodes(stmt.getChildrenNodes, vec)
 
-    // filter others stmt
-    case fst =>
-      if (!ctx.config.filterStmt(fst))
-        putNode(fst, vec)
+      else stmt match {
+        // skip ExpressionStmt
+        case est: ExpressionStmt =>
+          collectNode(est.getExpression, vec)
+        // skip BlockStmt
+        case bst: BlockStmt =>
+          collectNodes(bst.getStmts, vec)
+        // skip synchronized
+        case syncStmt: SynchronizedStmt =>
+          val bk = syncStmt.getBlock
+          if (bk != null)
+            collectNodes(bk.getStmts, vec)
+
+        // filter others stmt
+        case fst =>
+          if (!ctx.config.filterStmt(fst))
+            putNode(fst, vec)
+      }
+    }
   }
 
   override protected def putNode(node: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit =
@@ -63,11 +70,7 @@ class SkipLocksVecGen[F] extends BasicVecGen[F] {
 
       case _ =>
         vec.put(findNodeName(node).asInstanceOf[F])
-        val children = node.getChildrenNodes
-        if (children != null && children.size() > 0) {
-          for (n <- children)
-            collectNode(n, vec)
-        }
+        collectNodes(node.getChildrenNodes, vec)
     }
 }
 

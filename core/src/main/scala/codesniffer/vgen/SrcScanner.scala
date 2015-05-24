@@ -3,7 +3,7 @@ package codesniffer.vgen
 import java.io.{File, FileInputStream, FilenameFilter}
 
 import codesniffer.core.Location
-import com.github.javaparser.JavaParser
+import com.github.javaparser.{ASTHelper, JavaParser}
 
 /**
  * Created by Bowen Cai on 5/1/2015.
@@ -29,7 +29,8 @@ class SrcScanner[F](val context: Context[F]) {
 
       val stream = new FileInputStream(src)
       val cu = try {
-         JavaParser.parse(stream, "UTF-8", false)
+        JavaParser.setDoNotConsiderAnnotationsAsNodeStartForCodeAttribution(true)
+        JavaParser.parse(stream, "UTF-8", false)
       } catch {
         case e: Exception =>
           throw new RuntimeException(s"Could not parse file ${src.getPath}", e)

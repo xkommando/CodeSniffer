@@ -13,12 +13,58 @@ object MathUtils {
   import MathDef._
   import org.apache.commons.math3.special._
 
+  /**
+   * for vectors with significant length difference
+   */
+  @inline
+  def EuclideanDist[T:Numeric](arr1: Array[T],  len1: Int, arr2: Array[T], len2: Int): Double = {
+    var sum = 0.0
+    var idx = 0
+    var short = 0
+    var long = 0
+    var sa: Array[T] = null
+    var la: Array[T] = null
+    if (len1 < len2) {
+      sa = arr1
+      la = arr2
+      short = len1
+      long = len2
+    } else {
+      sa = arr2
+      la = arr1
+      short = len2
+      long = len1
+    }
+    for (i <- 0 until short) {
+      val p = sa(i)
+      val dist = implicitly[Numeric[T]] toDouble  (implicitly[Numeric[T]] minus (la(i), p))
+      sum += dist * dist
+      idx += 1
+    }
+    for (i <- idx until long) {
+      val p = implicitly[Numeric[T]] toDouble (la(i))
+      sum += p * p
+    }
+    StrictMath.sqrt(sum)
+  }
+
+  @inline
+  def EuclideanDist(arr1: Array[Int], arr2: Array[Int], length: Int): Double = {
+    var sum = 0.0
+    for (i <- 0 until length) {
+      val p = arr1(i)
+      val dist = arr2(i) - p
+      sum += dist * dist
+    }
+    StrictMath.sqrt(sum)
+  }
+
   @inline
   def EuclideanDist[T:Numeric](arr1: Array[T], arr2: Array[T], length: Int): Double = {
     var sum = 0.0
     for (i <- 0 until length) {
       val p = arr1(i)
-      val dist =  implicitly[Numeric[T]] toDouble  (implicitly[Numeric[T]] minus (arr2(i), p))
+      val dist = implicitly[Numeric[T]] toDouble  (implicitly[Numeric[T]] minus (arr2(i), p))
       sum += dist * dist
     }
     StrictMath.sqrt(sum)
@@ -78,7 +124,6 @@ object MathUtils {
     m
   }
 
-
   // Computes (a.b) mod UH_PRIME_DEFAULT.
 //  inline Uns32T computeProductModDefaultPrime(Uns32T *a, Uns32T *b, IntT size){
   @inline
@@ -92,8 +137,6 @@ object MathUtils {
       }
       h.toInt
   }
-
-
 
   // determineRTCoefficients
   def estimate3Time(session: Session): (Double, Double, Double) = {
@@ -109,13 +152,10 @@ object MathUtils {
 
     val paramM = computeMfromK_P(Defs.K_default, session.successProb)
     val paramL = paramM * (paramM - 1) / 2
-
-
 //    val samples = session.vectors.
 
     ???
   }
-
 
   class RandomExt(private[this] val rand: java.util.Random) {
 
@@ -124,12 +164,10 @@ object MathUtils {
 
     @inline
     def nextDouble(lowerBound: Double, upperBound: Double): Double = rand.nextDouble() * (upperBound - lowerBound) + lowerBound
-
   }
 
   import scala.language.implicitConversions
 
   implicit def applyConversion(r: Random): RandomExt = new RandomExt(r.self)
-
 
 }

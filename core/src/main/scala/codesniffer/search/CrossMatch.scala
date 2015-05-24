@@ -3,7 +3,7 @@ package codesniffer.search
 import java.io.File
 import java.util
 
-import codesniffer.core.{CharacVec, Indexer, MemWriter}
+import codesniffer.core.{WeightedVec, CharacVec, Indexer, MemWriter}
 import codesniffer.vgen._
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.MethodDeclaration
@@ -25,13 +25,11 @@ object CrossMatch {
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
     val vs = new MemWriter[String]
+    vs.sizeHint(1024)
     val scanner = new SrcScanner(new Context[String](cfg, null, null, idx, vs))
     // save exact source to vector, for manually check
-//    scanner.methodVisitor.before =
-//      (m: MethodDeclaration, ctx: Context[String])=> {
-//        val v = BasicVecGen.newVec[String](m, ctx)
-//        v
-//      }
+//    scanner.methodVisitor.before = (m: MethodDeclaration, ctx: Context[String]) => new WeightedVec(BasicVecGen.newVec(m, ctx))
+
     scanner.methodVisitor.after =
       (m: MethodDeclaration, v: CharacVec[String], ctx: Context[String]) => {
         if (v.count > 20) {
@@ -44,16 +42,18 @@ object CrossMatch {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
       case src if src.isFile => scanner.scanFile(src)
     }
+    System.gc()
     vs
   }
 
   def findMatch(vLib: CharacVec[String], vApps: MemWriter[String], result: SortedList): SortedList = {
     val c1 = vLib.count
+    val threshold = 18
     for (vApp <- vApps) {
       val c2 = vApp.count
-      if (c1 > 20 && c2 > 20 && math.abs(c1 - c2) < 60) {
+      if (math.abs(c1 - c2) < 60) {
         val dist = vLib.distance(vApp)
-        if (dist < 20)
+        if (dist < threshold)
           result.put(dist, (vLib, vApp.asInstanceOf[CharacVec[String]]))
       }
     }
@@ -63,8 +63,8 @@ object CrossMatch {
   def main(args: Array[String]): Unit = {
     var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
 //    var path2lib: String = "E:\\research\\top\\jdk-1.7\\java\\util\\concurrent"
-    var path2Apps = Array("E:\\\\research\\\\top\\\\h2-1.4.187-sources",
-      "E:\\research\\top\\derby")//,
+    var path2Apps = Array("E:\\\\research\\\\top\\\\h2-1.4.187-sources")//,
+//      "E:\\research\\top\\derby")//,
 //      "E:\\research\\top\\Openfire",
 //      "E:\\research\\top\\spring-framework",
 //      "D:\\Program Files\\adt-bundle-windows-x86_64-20130219\\sdk\\sources\\android-19")

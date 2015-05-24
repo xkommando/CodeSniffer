@@ -86,21 +86,25 @@ case class ArrayVec[T](indexer: Indexer[T],
   }
 
 
-  override def merge(other: ArrayVec[T]): this.type = {
-    if (other.indexer == indexer) {
-      val otherSz = other.vector.length
-      val minLen = if (otherSz > vector.length) {
-        ensureSize(otherSz)
-        vector.length
-      } else otherSz
+  override def merge(other: CharacVec[T]): this.type = {
+    other match {
+      case a: ArrayVec[T] =>
+        if (a.indexer == indexer) {
+          val otherSz = a.vector.length
+          val minLen = if (otherSz > vector.length) {
+            ensureSize(otherSz)
+            vector.length
+          } else otherSz
 
-      for (idx <- 0 to minLen) {
-        vector(idx) += other.vector(idx)
-      }
-      _count += other.count
+          for (idx <- 0 to minLen) {
+            vector(idx) += a.vector(idx)
+          }
+          _count += other.count
 
-    } else throw new IllegalArgumentException(
-      s"Could not merge vectors built under different indexer(different coordinates): $this, \r\n$other")
+        } else throw new IllegalArgumentException(
+          s"Could not merge vectors built under different indexer(different coordinates): $this, \r\n$other")
+      case _ => ???
+    }
     this
   }
 

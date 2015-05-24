@@ -34,6 +34,6 @@ case class CounterVec[T](location: Location) extends CharacVec[T] {
   def get(name: T): Option[Int] = ???
   def remove(name: T): Int = ???
   def update(name: T, weight: Int): Int = ???
-  def merge(other: ArrayVec[T]): this.type = ???
+  def merge(other: CharacVec[T]): this.type = ???
 
 }

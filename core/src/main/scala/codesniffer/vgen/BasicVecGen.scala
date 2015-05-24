@@ -59,23 +59,22 @@ object BasicVecGen {
     case _  => "UNK"
   }
 
-
-  protected def findCallee(exp: Expression): String = exp match {
+  protected def calleeName(exp: Expression): String = exp match {
     case fa: FieldAccessExpr => fa.getScope + "." + fa.getField
     case nm: NameExpr => nm.getName
     case t: ThisExpr => "this"
     case null => "this"
     case s: SuperExpr => "super"
-    case mc: MethodCallExpr => findCallee(mc.getScope) + "." + mc.getName // actually we need the return type
-    case pt: EnclosedExpr => findCallee(pt.getInner)
+    case mc: MethodCallExpr => calleeName(mc.getScope) + "." + mc.getName // actually we need the return type
+    case pt: EnclosedExpr => calleeName(pt.getInner)
     case klass: ClassExpr => extractTypeName(klass.getType) + ".class"
     case cst: CastExpr => extractTypeName(cst.getType)
     case str: StringLiteralExpr => "String"
-    case arr: ArrayAccessExpr => findCallee(arr.getName)
+    case arr: ArrayAccessExpr => calleeName(arr.getName)
     case nobj: ObjectCreationExpr => extractTypeName(nobj.getType)
-    case cnd: ConditionalExpr => findCallee(cnd.getThenExpr)
-    case as: AssignExpr => findCallee(as.getTarget)
-    case bin: BinaryExpr => findCallee(bin.getLeft)
+    case cnd: ConditionalExpr => calleeName(cnd.getThenExpr)
+    case as: AssignExpr => calleeName(as.getTarget)
+    case bin: BinaryExpr => calleeName(bin.getLeft)
     case a =>
       println(s"========================================\r\n"
         + s"${a.getParentNode}\r\n$a\r\n${a.getParentNode.getParentNode}\r\n${a.getClass}"
@@ -105,12 +104,7 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
         var vec = before(method, ctx)
 
         try {
-          //          val counter = new CounterVec[String]
-          //          collectNodes(method.getBody.getStmts, counter)(ctx)
-          //          val c1 = counter.count
-
           collectNodes(method.getBody.getStmts, vec)(ctx)
-
         } catch {
           case e: Exception => throw new RuntimeException(s"Could not travel though method ${ctx.currentLocation}", e)
         }
@@ -133,50 +127,51 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
         collectNodes(pnode.getChildrenNodes, vec)
       } else
         pnode match {
-          case stmt: Statement =>
-            if (!cfg.filterStmt(stmt)) {
-              if (ctx.config.skipStmt(stmt))
-                collectNodes(stmt.getChildrenNodes, vec)
-              else
-                collectStmt(stmt, vec)
-            }
-          // filter expr
-          case expr: Expression =>
-            if (!cfg.filterExpr(expr)) {
-              if (cfg.skipExpr(expr))
-                collectNodes(expr.getChildrenNodes, vec)
-              else
-                collectExpr(expr, vec)
-            }
+          case stmt: Statement => collectStmt(stmt, vec)
+          case expr: Expression =>  collectExpr(expr, vec)
           // continue with new class
           case tp: ClassOrInterfaceDeclaration if !tp.isInterface =>
             classVisitor.visit(tp, ctx)
-
           case node => putNode(node, vec)
         }
     }
   }
 
   @inline
-  protected def collectExpr(expr: Expression, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = expr match {
-      // skip enclosed expr
-    case e: EnclosedExpr =>
-      collectExpr(e.getInner, vec)
-    case ot => putNode(ot, vec)
+  protected def collectExpr(expr: Expression, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
+    if (!ctx.config.filterExpr(expr)) {
+      if (ctx.config.skipExpr(expr))
+        collectNodes(expr.getChildrenNodes, vec)
+      else
+        expr match {
+          // skip enclosed expr
+          case e: EnclosedExpr =>
+            collectExpr(e.getInner, vec)
+          case ot => putNode(ot, vec)
+        }
+    }
   }
 
+
   @inline
-  protected def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = stmt match {
-    // skip ExpressionStmt
-    case est: ExpressionStmt =>
-      collectNode(est.getExpression, vec)
-    // skip BlockStmt
-    case bst: BlockStmt =>
-      collectNodes(bst.getStmts, vec)
-    // filter others stmt
-    case fst =>
-      if (!ctx.config.filterStmt(fst))
-        putNode(fst, vec)
+  protected def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
+    if (!ctx.config.filterStmt(stmt)) {
+      if (ctx.config.skipStmt(stmt))
+        collectNodes(stmt.getChildrenNodes, vec)
+      else
+        stmt match {
+          // skip ExpressionStmt
+          case est: ExpressionStmt =>
+            collectNode(est.getExpression, vec)
+          // skip BlockStmt
+          case bst: BlockStmt =>
+            collectNodes(bst.getStmts, vec)
+          // filter others stmt
+          case fst =>
+            if (!ctx.config.filterStmt(fst))
+              putNode(fst, vec)
+        }
+    }
   }
 
   @inline
@@ -190,12 +185,16 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
     }
 
   @inline
-  protected[codesniffer] def addMethodCall(call: MethodCallExpr, vec: CharacVec[F]): Unit = {
+  protected[codesniffer] def addMethodCall(call: MethodCallExpr, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
     vec.put("MethodCallExpr".asInstanceOf[F])
-    val scope = BasicVecGen.findCallee(call.getScope)
-    val methodName = call.getName
-    //          val lsExps = call.getArgs
-    vec.funcCalls += (scope -> methodName)
+    val scope = call.getScope
+    if (scope != null) {
+      collectExpr(scope, vec)
+//      val calleeName = BasicVecGen.calleeName(call.getScope)
+//      val methodName = call.getName
+                          val lsExps = call.getArgs
+//      vec.funcCalls += (calleeName -> methodName)
+    }
   }
 
   @inline

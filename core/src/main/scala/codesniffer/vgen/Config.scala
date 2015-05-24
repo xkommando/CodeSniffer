@@ -32,4 +32,6 @@ class Config {
   var filterExpr: Expression => Boolean = NOP[Expression]
   var skipExpr: Expression => Boolean = NOP[Expression]
 
+  var distThreshold = 18 // default weight 1
+
 }
