@@ -30,7 +30,9 @@
         <connection>scm:https://github.com/xkommando/CodeSniffer.git</connection>
     </scm>
     <modules>
+        <module>api</module>
         <module>core</module>
+        <module>java8</module>
         <module>webface</module>
     </modules>
 

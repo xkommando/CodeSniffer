@@ -1,10 +1,10 @@
 package codesniffer.vgen
 
 import codesniffer.core.CharacVec
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.expr.{EnclosedExpr, Expression}
-import com.github.javaparser.ast.stmt.{SynchronizedStmt, BlockStmt, ExpressionStmt, Statement}
+import codesniffer.api.Node
+import codesniffer.api.body.ClassOrInterfaceDeclaration
+import codesniffer.api.expr.{EnclosedExpr, Expression}
+import codesniffer.api.stmt.{SynchronizedStmt, BlockStmt, ExpressionStmt, Statement}
 
 import scala.collection.convert.wrapAsScala._
 /**

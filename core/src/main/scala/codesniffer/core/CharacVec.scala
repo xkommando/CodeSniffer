@@ -1,6 +1,5 @@
 package codesniffer.core
 
-
 import scala.collection.mutable.{ArrayBuffer, Builder}
 
 

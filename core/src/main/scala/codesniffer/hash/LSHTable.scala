@@ -1,6 +1,5 @@
 package codesniffer.hash
 
-
 import codesniffer.core.MathUtils.applyConversion
 import codesniffer.core.{ArrayVec, MathUtils}
 

@@ -3,12 +3,16 @@ package codesniffer.search
 import java.io.File
 import java.util
 
+import codesniffer.api.Node
+import codesniffer.api.body.MethodDeclaration
+import codesniffer.api.expr.ThisExpr
+import codesniffer.api.stmt.EmptyStmt
 import codesniffer.core.{WeightedVec, CharacVec, Indexer, MemWriter}
 import codesniffer.vgen._
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.expr.ThisExpr
-import com.github.javaparser.ast.stmt.{EmptyStmt, Statement, SynchronizedStmt}
+//import com.github.javaparser.ast.Node
+//import com.github.javaparser.ast.body.MethodDeclaration
+//import com.github.javaparser.ast.expr.ThisExpr
+//import com.github.javaparser.ast.stmt.{EmptyStmt, Statement, SynchronizedStmt}
 
 import scala.collection.convert.wrapAsScala._
 import scala.concurrent._

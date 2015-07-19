@@ -2,10 +2,10 @@ package codesniffer.vgen
 
 import java.io.File
 
-import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.stmt.Statement
-import com.github.javaparser.ast.{Node, PackageDeclaration}
+import codesniffer.api.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
+import codesniffer.api.expr.Expression
+import codesniffer.api.stmt.Statement
+import codesniffer.api.{Node, PackageDeclaration}
 
 
 /**

@@ -1,10 +1,10 @@
 package codesniffer.vgen
 
+import codesniffer.api.CompilationUnit
 import codesniffer.core.PackageScope
-import com.github.javaparser.ast.CompilationUnit
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.expr.QualifiedNameExpr
-import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
+import codesniffer.api.body.ClassOrInterfaceDeclaration
+import codesniffer.api.expr.QualifiedNameExpr
+import codesniffer.api.visitor.{VoidVisitor, VoidVisitorAdapter}
 
 import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._

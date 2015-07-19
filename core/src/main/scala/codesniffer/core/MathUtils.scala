@@ -1,6 +1,7 @@
 package codesniffer.core
 
 import codesniffer.hash.{Defs, Session}
+import codesniffer.hash.Defs
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random

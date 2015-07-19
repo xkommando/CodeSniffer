@@ -3,10 +3,10 @@ package codesniffer.vgen
 import java.lang.reflect.Modifier
 
 import codesniffer.core.{WeightedVec, CharacVec, ArrayVec}
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.stmt.Statement
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter
+import codesniffer.api.Node
+import codesniffer.api.body.MethodDeclaration
+import codesniffer.api.stmt.Statement
+import codesniffer.api.visitor.VoidVisitorAdapter
 
 import scala.StringBuilder
 import scala.beans.BeanProperty

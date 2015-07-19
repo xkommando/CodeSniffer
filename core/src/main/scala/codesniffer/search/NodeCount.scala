@@ -6,11 +6,11 @@ import java.util
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
 import codesniffer.core._
-import codesniffer.vgen.{Config, Context, SrcScanner}
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.expr.ThisExpr
-import com.github.javaparser.ast.stmt.EmptyStmt
+import codesniffer.vgen.{Context, Config, SrcScanner}
+import codesniffer.api.Node
+import codesniffer.api.body.MethodDeclaration
+import codesniffer.api.expr.ThisExpr
+import codesniffer.api.stmt.EmptyStmt
 
 import scala.collection.convert.wrapAsScala._
 

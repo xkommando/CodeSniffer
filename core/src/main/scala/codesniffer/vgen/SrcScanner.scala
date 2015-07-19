@@ -3,7 +3,10 @@ package codesniffer.vgen
 import java.io.{File, FileInputStream, FilenameFilter}
 
 import codesniffer.core.Location
-import com.github.javaparser.{ASTHelper, JavaParser}
+import codesniffer.java8.{CompilationUnitListener, Java8Parser, Java8Lexer}
+import org.antlr.v4.runtime.atn.PredictionMode
+import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.{CommonTokenStream, ANTLRInputStream}
 
 /**
  * Created by Bowen Cai on 5/1/2015.
@@ -19,7 +22,6 @@ class SrcScanner[F](val context: Context[F]) {
   classVisitor.setMethodVisitor(methodVisitor)
   methodVisitor.setClassVisitor(classVisitor)
 
-
   def scanFile(src: File): Unit = {
     require(src.isFile)
     if (!context.config.filterFile(src)) {
@@ -28,9 +30,25 @@ class SrcScanner[F](val context: Context[F]) {
       context.currentLocation = new Location(fileName, 0, 0, null)
 
       val stream = new FileInputStream(src)
+
+//      compilationUnit =
       val cu = try {
-        JavaParser.setDoNotConsiderAnnotationsAsNodeStartForCodeAttribution(true)
-        JavaParser.parse(stream, "UTF-8", false)
+//        JavaParser.setDoNotConsiderAnnotationsAsNodeStartForCodeAttribution(true)
+//        JavaParser.parse(stream, "UTF-8", false)
+        val lex = new Java8Lexer(new ANTLRInputStream(stream))
+        val tokens = new CommonTokenStream(lex)
+
+        //printTokens(lex);
+        val parser = new Java8Parser(tokens)
+        parser.getInterpreter.setPredictionMode(PredictionMode.SLL)
+        val tree = parser.compilationUnit
+        val walker = new ParseTreeWalker
+
+        // Fills out the compilationUnit object
+        val listener: CompilationUnitListener = new CompilationUnitListener(tokens)
+        walker.walk(listener, tree)
+        listener.getCompilationUnit
+
       } catch {
         case e: Exception =>
           throw new RuntimeException(s"Could not parse file ${src.getPath}", e)

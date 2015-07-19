@@ -14,7 +14,7 @@ case class ArrayVec[T](indexer: Indexer[T],
 
   //  var id = -1
 
-  private var vector: Array[Int] = new Array[Int](64)
+  var vector: Array[Int] = new Array[Int](64)
   val funcCalls = new ArrayBuffer[FunctionCall]
   private[this] var _count = 0
 

@@ -1,7 +1,7 @@
 package codesniffer.vgen
 
-import com.github.javaparser.ast.expr.{MethodCallExpr, EnclosedExpr, Expression}
-import com.github.javaparser.ast.stmt._
+import codesniffer.api.expr.{MethodCallExpr, EnclosedExpr, Expression}
+import codesniffer.api.stmt._
 
 /**
  *

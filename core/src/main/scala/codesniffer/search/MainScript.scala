@@ -5,36 +5,40 @@ import java.util
 
 import codesniffer.core._
 import codesniffer.vgen._
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.expr.ThisExpr
-import com.github.javaparser.ast.stmt.EmptyStmt
+import codesniffer.api.Node
+import codesniffer.api.expr.ThisExpr
+import codesniffer.api.stmt.EmptyStmt
 
 import scala.collection.convert.wrapAsScala._
 import scala.concurrent.{ExecutionContext, Future, future}
 import scala.util.{Failure, Success}
 
 /**
+ *
+ *
  * Created by Bowen Cai on 4/25/2015.
  */
 object MainScript {
 
   // to a directory, or a single source file
   //  val path = "D:\\__jvm\\spring-framework-master"
-  //  val path = "D:\\__jvm\\cache\\ehcache-2.7.5"
+//  val path = "D:\\__jvm\\cache\\ehcache-2.7.5"
+  val path = "D:\\__TEMP__\\src\\Src3.java"
+  var resultSize = 16
   //  val path = "D:\\__jvm\\spring-framework-master\\spring-framework-master\\spring-jdbc"
 
   def main(args: Array[String]): Unit = {
 
-    var resultSize = -1
-    var path: String = null
-    if (args != null && args.length == 2) {
-      path = args(0)
-      resultSize = args(1).toInt
-      println(s"Scanning directory $path, estimated result size $resultSize")
-    } else {
-      println("Usage: <path to source directory> <expected result size>")
-      sys.exit(1)
-    }
+//    var resultSize = -1
+//    var path: String = null
+//    if (args != null && args.length == 2) {
+//      path = args(0)
+//      resultSize = args(1).toInt
+//      println(s"Scanning directory $path, estimated result size $resultSize")
+//    } else {
+//      println("Usage: <path to source directory> <expected result size>")
+//      sys.exit(1)
+//    }
     /** **************************************************************************
       *  prepare
       */
@@ -96,8 +100,8 @@ object MainScript {
           val b = vecCollector(k).asInstanceOf[ArrayVec[String]]
           val bc = b.count
           if (ac > 20 && bc > 20 && math.abs(ac - bc) < 60) { // this could significantly reduce comparison
-//            val dist = a.dist2(b)
-            val dist = a.math.EuclideanDist(b)
+            val dist = a.distance(b)
+//            val dist = ArrayVec.math.EuclideanDist(b)
             if (dist < threshold)
               sortedList.put(dist, (a, b))
 

@@ -2,13 +2,13 @@ package codesniffer.vgen
 
 import java.lang.reflect.Modifier
 
+import codesniffer.api.Node
+import codesniffer.api.`type`._
+import codesniffer.api.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
+import codesniffer.api.expr._
+import codesniffer.api.stmt.{BlockStmt, ExpressionStmt, Statement}
+import codesniffer.api.visitor.{VoidVisitor, VoidVisitorAdapter}
 import codesniffer.core._
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.`type`._
-import com.github.javaparser.ast.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
-import com.github.javaparser.ast.expr._
-import com.github.javaparser.ast.stmt.{BlockStmt, ExpressionStmt, Statement}
-import com.github.javaparser.ast.visitor.{VoidVisitor, VoidVisitorAdapter}
 
 import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
@@ -101,7 +101,7 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
 
         val prevLoc = ctx.currentLocation
         ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine, method.getEndLine)
-        var vec = before(method, ctx)
+        val vec = before(method, ctx)
 
         try {
           collectNodes(method.getBody.getStmts, vec)(ctx)
@@ -192,7 +192,7 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
       collectExpr(scope, vec)
 //      val calleeName = BasicVecGen.calleeName(call.getScope)
 //      val methodName = call.getName
-                          val lsExps = call.getArgs
+//      val lsExps = call.getArgs
 //      vec.funcCalls += (calleeName -> methodName)
     }
   }

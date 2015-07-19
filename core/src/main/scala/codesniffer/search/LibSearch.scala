@@ -5,11 +5,12 @@ import java.lang.reflect.Modifier
 import java.util
 
 import codesniffer.core._
+import codesniffer.core.MemWriter
 import codesniffer.vgen.{Context, SlicerScanner, Config}
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.expr.ThisExpr
-import com.github.javaparser.ast.stmt.EmptyStmt
+import codesniffer.api.Node
+import codesniffer.api.body.MethodDeclaration
+import codesniffer.api.expr.ThisExpr
+import codesniffer.api.stmt.EmptyStmt
 
 import scala.collection.convert.wrapAsScala._
 import scala.collection.mutable
@@ -118,7 +119,7 @@ object LibSearch {
 //                val dist = v1.math.EuclideanDist(v2)
                 val dist = v1.math.EuclideanDist(appFunc.asInstanceOf[ArrayVec[String]])
                 if (dist < threshold)
-                  result.put(dist, (libFunc, appFunc)) // .asInstanceOf[CharacVec[String]]))
+                  result.put(dist, (libFunc, appFunc))
               }
             }
           while (result.size() > resultSizePerFunc) result.pollLastEntry()
@@ -136,10 +137,6 @@ object LibSearch {
       case Success(r) =>
         while (summary.size() > resultSizeTotal) summary.pollLastEntry()
         val t1 = System.currentTimeMillis()
-
-//        searchedApp.clear()
-//        searchedApp = null
-
         var rank = 1
         println(s"find ${summary.size()} clone pair, time ${t1 - t0} ms")
 
@@ -159,6 +156,7 @@ object LibSearch {
   }
 
 }
+
 /// WARN: racing!!!
 //        val appVecList = searchedApp.getOrElse((lower, upper),{
 //          val ls = new MemWriter[String]

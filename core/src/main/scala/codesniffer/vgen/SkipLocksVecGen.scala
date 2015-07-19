@@ -1,9 +1,9 @@
 package codesniffer.vgen
 
 import codesniffer.core.CharacVec
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.expr.MethodCallExpr
-import com.github.javaparser.ast.stmt._
+import codesniffer.api.Node
+import codesniffer.api.expr.MethodCallExpr
+import codesniffer.api.stmt._
 
 import scala.collection.convert.wrapAsScala._
 

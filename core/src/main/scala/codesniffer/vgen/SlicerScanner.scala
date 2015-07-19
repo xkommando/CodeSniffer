@@ -3,7 +3,10 @@ package codesniffer.vgen
 import java.io.{FilenameFilter, FileInputStream, File}
 
 import codesniffer.core.Location
-import com.github.javaparser.JavaParser
+import codesniffer.java8.{CompilationUnitListener, Java8Parser, Java8Lexer}
+import org.antlr.v4.runtime.atn.PredictionMode
+import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.{CommonTokenStream, ANTLRInputStream}
 
 /**
  * Created by Bowen Cai on 5/22/2015.
@@ -36,7 +39,22 @@ class SlicerScanner[F](val context: Context[F]) {
 
       val stream = new FileInputStream(src)
       val cu = try {
-        JavaParser.parse(stream, "UTF-8", false)
+        //        JavaParser.setDoNotConsiderAnnotationsAsNodeStartForCodeAttribution(true)
+        //        JavaParser.parse(stream, "UTF-8", false)
+        val lex = new Java8Lexer(new ANTLRInputStream(stream))
+        val tokens = new CommonTokenStream(lex)
+
+        //printTokens(lex);
+        val parser = new Java8Parser(tokens)
+        parser.getInterpreter.setPredictionMode(PredictionMode.SLL)
+        val tree = parser.compilationUnit
+        val walker = new ParseTreeWalker
+
+        // Fills out the compilationUnit object
+        val listener: CompilationUnitListener = new CompilationUnitListener(tokens)
+        walker.walk(listener, tree)
+        listener.getCompilationUnit
+
       } catch {
         case e: Exception =>
           throw new RuntimeException(s"Could not parse file ${src.getPath}", e)
