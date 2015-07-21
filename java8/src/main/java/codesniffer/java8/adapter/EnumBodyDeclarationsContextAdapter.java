@@ -39,8 +39,9 @@ public class EnumBodyDeclarationsContextAdapter implements Adapter<List<BodyDecl
             return null;
         }
 
-        List<BodyDeclaration> bodyDeclarationList = new LinkedList<BodyDeclaration>();
-        for (Java8Parser.ClassBodyDeclarationContext classBodyDeclarationContext : context.classBodyDeclaration()) {
+        List<Java8Parser.ClassBodyDeclarationContext> cls = context.classBodyDeclaration();
+        List<BodyDeclaration> bodyDeclarationList = new ArrayList<>(cls.size());
+        for (Java8Parser.ClassBodyDeclarationContext classBodyDeclarationContext : cls) {
             bodyDeclarationList.add(Adapters.getClassBodyDeclarationContextAdapter().adapt(classBodyDeclarationContext, adapterParameters));
         }
 

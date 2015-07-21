@@ -46,8 +46,9 @@ public class FieldDeclarationContextAdapter implements Adapter<FieldDeclaration,
         fieldDeclaration.setType(Adapters.getTypeContextAdapter().adapt(context.type(), adapterParameters));
 
 
-        List<VariableDeclarator> variableDeclaratorList = new LinkedList<VariableDeclarator>();
-        for (Java8Parser.VariableDeclaratorContext variableDeclaratorContext : context.variableDeclarator()) {
+        List<Java8Parser.VariableDeclaratorContext> cls = context.variableDeclarator();
+        List<VariableDeclarator> variableDeclaratorList = new ArrayList<>(cls.size());
+        for (Java8Parser.VariableDeclaratorContext variableDeclaratorContext : cls) {
             variableDeclaratorList.add(Adapters.getVariableDeclaratorContextAdapter().adapt(variableDeclaratorContext, adapterParameters));
         }
         fieldDeclaration.setVariables(variableDeclaratorList);

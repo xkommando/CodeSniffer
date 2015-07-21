@@ -33,9 +33,11 @@ public class LocalVariableDeclarationContextAdapter implements Adapter<VariableD
         AdapterUtil.setPosition(variableDeclarationExpr, context);
 
         int modifiers = 0;
-        List<AnnotationExpr> annotations = new LinkedList<AnnotationExpr>();
+        ArrayList<AnnotationExpr> annotations = new ArrayList<>();
         if (context.variableModifiers() != null) {
-            for (Java8Parser.AnnotationContext annotationContext : context.variableModifiers().annotation()) {
+            List<Java8Parser.AnnotationContext> anns = context.variableModifiers().annotation();
+            annotations.ensureCapacity(anns.size());
+            for (Java8Parser.AnnotationContext annotationContext : anns) {
                 AnnotationExpr annotationExpr = Adapters.getAnnotationContextAdapter().adapt(annotationContext, adapterParameters);
                 annotations.add(annotationExpr);
             }
@@ -47,9 +49,9 @@ public class LocalVariableDeclarationContextAdapter implements Adapter<VariableD
             variableDeclarationExpr.setModifiers(modifiers);
         }
 
-
-        List<VariableDeclarator> variableDeclaratorList = new LinkedList<VariableDeclarator>();
-        for (Java8Parser.VariableDeclaratorContext variableDeclaratorContext : context.variableDeclarator()) {
+        List<Java8Parser.VariableDeclaratorContext> vls = context.variableDeclarator();
+        List<VariableDeclarator> variableDeclaratorList = new ArrayList<>(vls.size());
+        for (Java8Parser.VariableDeclaratorContext variableDeclaratorContext : vls) {
             variableDeclaratorList.add(Adapters.getVariableDeclaratorContextAdapter().adapt(variableDeclaratorContext, adapterParameters));
         }
         variableDeclarationExpr.setVars(variableDeclaratorList);

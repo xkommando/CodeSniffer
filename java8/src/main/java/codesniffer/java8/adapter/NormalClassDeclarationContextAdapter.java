@@ -36,7 +36,7 @@ public class NormalClassDeclarationContextAdapter implements Adapter<TypeDeclara
         classOrInterfaceDeclaration.setName(context.Identifier().getText());
 
         if (context.type() != null) {
-            List<ClassOrInterfaceType> classOrInterfaceTypeList = new LinkedList<ClassOrInterfaceType>();
+            List<ClassOrInterfaceType> classOrInterfaceTypeList = new ArrayList<>(2);
 
             // In this case, context.type() has to be a reference type since you cannot extend from a primitive
             // Though the declaration is expecting a ClassOrInterfaceType rather than a ReferenceType

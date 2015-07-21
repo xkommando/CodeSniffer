@@ -153,6 +153,17 @@ public class UnaryExpressionNotPlusMinusContextAdapter implements Adapter<Expres
                     arrayAccessExpr.setIndex(Adapters.getExpressionContextAdapter().adapt(selector.expression(), adapterParameters));
                     leftExpression = arrayAccessExpr;
                     break;
+                case 6:
+                    // handle method call with type parameters, e.g.,
+                    // guava immutable map ???
+                    // Arrays.sort(entryArray, 0, size, Ordering.from(comparator).<K>onKeys());
+
+                    MethodCallExpr typeMethodCallExpr = new MethodCallExpr();
+                    typeMethodCallExpr.setArgs(Adapters.getArgumentsContextAdapter().adapt(selector.typeParamCall().arguments(), adapterParameters));
+                    typeMethodCallExpr.setName(selector.typeParamCall().Identifier().getText());
+                    typeMethodCallExpr.setScope(leftExpression);
+                    leftExpression = typeMethodCallExpr;
+                    break;
             }
         }
 

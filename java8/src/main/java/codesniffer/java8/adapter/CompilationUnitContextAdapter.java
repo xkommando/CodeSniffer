@@ -30,18 +30,18 @@ public class CompilationUnitContextAdapter implements Adapter<CompilationUnit, J
         CompilationUnit compilationUnit = new CompilationUnit();
 
         compilationUnit.setPackage(Adapters.getPackageDeclarationContextAdapter().adapt(context.packageDeclaration(), adapterParameters));
+        List<Java8Parser.ImportDeclarationContext> ils = context.importDeclaration();
+        List<ImportDeclaration> importDeclarationList = new ArrayList<>(ils.size());
 
-        List<ImportDeclaration> importDeclarationList = new LinkedList<ImportDeclaration>();
-
-        for (Java8Parser.ImportDeclarationContext importDeclarationContext : context.importDeclaration()) {
+        for (Java8Parser.ImportDeclarationContext importDeclarationContext : ils) {
             importDeclarationList.add(Adapters.getImportDeclarationContextAdapter().adapt(importDeclarationContext, adapterParameters));
         }
 
         compilationUnit.setImports(importDeclarationList);
 
-
-        List<TypeDeclaration> typeDeclarationList = new LinkedList<TypeDeclaration>();
-        for (Java8Parser.TypeDeclarationContext typeDeclarationContext : context.typeDeclaration()) {
+        List<Java8Parser.TypeDeclarationContext> tls = context.typeDeclaration();
+        List<TypeDeclaration> typeDeclarationList = new ArrayList<>(tls.size());
+        for (Java8Parser.TypeDeclarationContext typeDeclarationContext : tls) {
             typeDeclarationList.add(Adapters.getTypeDeclarationContextAdapter().adapt(typeDeclarationContext, adapterParameters));
         }
 

@@ -27,8 +27,9 @@ import java.util.*;
 public class AnnotationTypeBodyContextAdapter implements Adapter<List<BodyDeclaration>, Java8Parser.AnnotationTypeBodyContext> {
     public List<BodyDeclaration> adapt(Java8Parser.AnnotationTypeBodyContext context, AdapterParameters adapterParameters) {
 
-        List<BodyDeclaration> bodyDeclarationList = new LinkedList<BodyDeclaration>();
-        for (Java8Parser.AnnotationTypeElementDeclarationContext declarationContext : context.annotationTypeElementDeclaration()) {
+        List<Java8Parser.AnnotationTypeElementDeclarationContext> als = context.annotationTypeElementDeclaration();
+        List<BodyDeclaration> bodyDeclarationList = new ArrayList<>(als.size());
+        for (Java8Parser.AnnotationTypeElementDeclarationContext declarationContext : als) {
             bodyDeclarationList.add(Adapters.getAnnotationTypeElementDeclarationContextAdapter().adapt(declarationContext, adapterParameters));
         }
 

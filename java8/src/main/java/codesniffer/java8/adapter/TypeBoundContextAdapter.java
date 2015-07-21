@@ -31,13 +31,11 @@ public class TypeBoundContextAdapter implements Adapter<List<ClassOrInterfaceTyp
             return null;
         }
 
-        List<Type> typeList = new LinkedList<Type>();
-        List<ClassOrInterfaceType> classOrInterfaceTypeList = new LinkedList<ClassOrInterfaceType>();
-
-        for (Java8Parser.TypeContext typeContext : context.type()) {
+        List<Java8Parser.TypeContext> cls = context.type();
+        List<Type> typeList = new ArrayList<>(cls.size());
+        for (Java8Parser.TypeContext typeContext : cls) {
             typeList.add(Adapters.getTypeContextAdapter().adapt(typeContext, adapterParameters));
         }
-
         // All instances should be classOrInterfaceType
         return AdapterUtil.convertTypeList(typeList);
     }

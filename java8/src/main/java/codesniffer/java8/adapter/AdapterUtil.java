@@ -187,9 +187,8 @@ public final class AdapterUtil {
             //throw new RuntimeException("typeList cannot be null");
         }
 
-        List<ClassOrInterfaceType> classOrInterfaceTypeList = new LinkedList<ClassOrInterfaceType>();
+        List<ClassOrInterfaceType> classOrInterfaceTypeList = new ArrayList<>(typeList.size());
         for (Type type : typeList) {
-
             if (type instanceof ReferenceType) {
                 ReferenceType referenceType = (ReferenceType)type;
                 classOrInterfaceTypeList.add((ClassOrInterfaceType)referenceType.getType());

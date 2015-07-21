@@ -31,8 +31,9 @@ public class TypeParametersContextAdapter implements Adapter<List<TypeParameter>
             return null;
         }
 
-        List<TypeParameter> typeParameterList = new LinkedList<TypeParameter>();
-        for (Java8Parser.TypeParameterContext typeParameterContext : context.typeParameter()) {
+        List<Java8Parser.TypeParameterContext> tls = context.typeParameter();
+        List<TypeParameter> typeParameterList = new ArrayList<>(tls.size());
+        for (Java8Parser.TypeParameterContext typeParameterContext : tls) {
             typeParameterList.add(Adapters.getTypeParameterContextAdapter().adapt(typeParameterContext, adapterParameters));
         }
 

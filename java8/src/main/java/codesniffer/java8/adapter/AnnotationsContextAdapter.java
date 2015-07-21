@@ -27,8 +27,9 @@ import java.util.*;
 public class AnnotationsContextAdapter implements Adapter<List<AnnotationExpr>, Java8Parser.AnnotationsContext> {
     public List<AnnotationExpr> adapt(Java8Parser.AnnotationsContext context, AdapterParameters adapterParameters) {
         if (context != null) {
-            List<AnnotationExpr> annotationExprList = new LinkedList<AnnotationExpr>();
-            for (Java8Parser.AnnotationContext annotationContext : context.annotation()) {
+            List<Java8Parser.AnnotationContext> als = context.annotation();
+            List<AnnotationExpr> annotationExprList = new ArrayList<>(als.size());
+            for (Java8Parser.AnnotationContext annotationContext : als) {
                 annotationExprList.add(Adapters.getAnnotationContextAdapter().adapt(annotationContext, adapterParameters));
             }
             return annotationExprList;

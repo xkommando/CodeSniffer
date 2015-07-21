@@ -28,13 +28,7 @@ import org.antlr.v4.runtime.tree.*;
 
 import java.io.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Mike De Haan
- * Date: 12/27/12
- * Time: 7:34 PM
- * To change this template use File | Settings | File Templates.
- */
+
 public class JavaParser {
 
     private JavaParser() {

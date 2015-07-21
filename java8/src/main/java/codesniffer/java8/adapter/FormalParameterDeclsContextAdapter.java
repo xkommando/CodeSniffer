@@ -35,10 +35,12 @@ public class FormalParameterDeclsContextAdapter implements Adapter<List<Paramete
             |   (normalParameterDecl COMMA)+ ellipsisParameterDecl  {$parameterType = 3;}
             ;
          */
-        List<Parameter> parameterList = new LinkedList<Parameter>();
 
-        if (context.normalParameterDecl() != null && context.normalParameterDecl().size() > 0) {
-            for (Java8Parser.NormalParameterDeclContext normalParameterDeclContext : context.normalParameterDecl()) {
+        List<Java8Parser.NormalParameterDeclContext> nls = context.normalParameterDecl();
+        ArrayList<Parameter> parameterList = new ArrayList<>();
+        if (nls != null && nls.size() > 0) {
+            parameterList.ensureCapacity(parameterList.size() + 1);
+            for (Java8Parser.NormalParameterDeclContext normalParameterDeclContext : nls) {
                 parameterList.add(Adapters.getNormalParameterDeclContextAdapter().adapt(normalParameterDeclContext, adapterParameters));
             }
         }

@@ -31,8 +31,9 @@ public class TypeListContextAdapter implements Adapter<List<Type>, Java8Parser.T
             return null;
         }
 
-        List<Type> typeList = new LinkedList<Type>();
-        for (Java8Parser.TypeContext typeContext : context.type()) {
+        List<Java8Parser.TypeContext> tls = context.type();
+        List<Type> typeList = new ArrayList<>(tls.size());
+        for (Java8Parser.TypeContext typeContext : tls) {
             typeList.add(Adapters.getTypeContextAdapter().adapt(typeContext, adapterParameters));
         }
 

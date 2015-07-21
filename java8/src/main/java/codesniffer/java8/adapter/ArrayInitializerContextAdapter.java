@@ -30,9 +30,9 @@ public class ArrayInitializerContextAdapter implements Adapter<ArrayInitializerE
         ArrayInitializerExpr arrayInitializerExpr = new ArrayInitializerExpr();
         AdapterUtil.setComments(arrayInitializerExpr, context, adapterParameters);
         AdapterUtil.setPosition(arrayInitializerExpr, context);
-
-        List<Expression> expressionList = new LinkedList<Expression>();
-        for (Java8Parser.VariableInitializerContext variableInitializerContext : context.variableInitializer()) {
+        List<Java8Parser.VariableInitializerContext> vini = context.variableInitializer();
+        List<Expression> expressionList = new ArrayList<>(vini.size());
+        for (Java8Parser.VariableInitializerContext variableInitializerContext : vini) {
             expressionList.add(Adapters.getVariableInitializerContextAdapter().adapt(variableInitializerContext, adapterParameters));
         }
         arrayInitializerExpr.setValues(expressionList);

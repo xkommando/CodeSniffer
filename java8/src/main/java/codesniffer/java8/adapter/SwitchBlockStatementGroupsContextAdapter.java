@@ -27,8 +27,9 @@ import java.util.*;
 public class SwitchBlockStatementGroupsContextAdapter implements Adapter<List<SwitchEntryStmt>, Java8Parser.SwitchBlockStatementGroupsContext> {
     public List<SwitchEntryStmt> adapt(Java8Parser.SwitchBlockStatementGroupsContext context, AdapterParameters adapterParameters) {
 
-        List<SwitchEntryStmt> switchEntryStmtList = new LinkedList<SwitchEntryStmt>();
-        for (Java8Parser.SwitchBlockStatementGroupContext groupContext : context.switchBlockStatementGroup()) {
+        List<Java8Parser.SwitchBlockStatementGroupContext> bls = context.switchBlockStatementGroup();
+        List<SwitchEntryStmt> switchEntryStmtList = new ArrayList<>(bls.size());
+        for (Java8Parser.SwitchBlockStatementGroupContext groupContext : bls) {
             switchEntryStmtList.add(Adapters.getSwitchBlockStatementGroupContextAdapter().adapt(groupContext, adapterParameters));
         }
 

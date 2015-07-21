@@ -35,8 +35,10 @@ public class ElementValuePairsContextAdapter implements Adapter<List<MemberValue
             ;
          */
 
-        List<MemberValuePair> memberValuePairList = new LinkedList<MemberValuePair>();
-        for (Java8Parser.ElementValuePairContext elementValuePairContext : context.elementValuePair()) {
+
+        List<Java8Parser.ElementValuePairContext> els = context.elementValuePair();
+        List<MemberValuePair> memberValuePairList = new ArrayList<>(els.size());
+        for (Java8Parser.ElementValuePairContext elementValuePairContext : els) {
             memberValuePairList.add(Adapters.getElementValuePairContextAdapter().adapt(elementValuePairContext, adapterParameters));
         }
 

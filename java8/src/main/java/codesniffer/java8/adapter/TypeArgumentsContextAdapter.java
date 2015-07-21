@@ -31,8 +31,9 @@ public class TypeArgumentsContextAdapter implements Adapter<List<Type>, Java8Par
             return null;
         }
 
-        List<Type> typeList = new LinkedList<Type>();
-        for (Java8Parser.TypeArgumentContext typeArgumentContext : context.typeArgument()) {
+        List<Java8Parser.TypeArgumentContext> tls = context.typeArgument();
+        List<Type> typeList = new ArrayList<>(tls.size());
+        for (Java8Parser.TypeArgumentContext typeArgumentContext : tls) {
             typeList.add(Adapters.getTypeArgumentContextAdapter().adapt(typeArgumentContext, adapterParameters));
         }
 

@@ -45,8 +45,9 @@ public class ArrayCreatorContextAdapter implements Adapter<Expression, Java8Pars
         if (context.arrayInitializer() != null) {
             arrayCreationExpr.setInitializer(Adapters.getArrayInitializerContextAdapter().adapt(context.arrayInitializer(), adapterParameters));
         } else if (context.expression() != null) {
-            List<Expression> expressionList = new LinkedList<Expression>();
-            for (Java8Parser.ExpressionContext expressionContext : context.expression()) {
+            List<Java8Parser.ExpressionContext> exps = context.expression();
+            List<Expression> expressionList = new ArrayList<>(exps.size());
+            for (Java8Parser.ExpressionContext expressionContext : exps) {
                 expressionList.add(Adapters.getExpressionContextAdapter().adapt(expressionContext, adapterParameters));
             }
             arrayCreationExpr.setDimensions(expressionList);

@@ -27,8 +27,9 @@ import java.util.*;
 public class ClassBodyContextAdapter implements Adapter<List<BodyDeclaration>, Java8Parser.ClassBodyContext> {
     public List<BodyDeclaration> adapt(Java8Parser.ClassBodyContext context, AdapterParameters adapterParameters) {
 
-        List<BodyDeclaration> bodyDeclarationList = new LinkedList<BodyDeclaration>();
-        for (Java8Parser.ClassBodyDeclarationContext classBodyDeclarationContext : context.classBodyDeclaration()) {
+        List<Java8Parser.ClassBodyDeclarationContext> cls = context.classBodyDeclaration();
+        List<BodyDeclaration> bodyDeclarationList = new ArrayList<>(cls.size());
+        for (Java8Parser.ClassBodyDeclarationContext classBodyDeclarationContext : cls) {
             bodyDeclarationList.add(Adapters.getClassBodyDeclarationContextAdapter().adapt(classBodyDeclarationContext, adapterParameters));
         }
 

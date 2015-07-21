@@ -27,6 +27,7 @@ import codesniffer.java8.*;
 import java.util.*;
 
 public class CatchClauseContextAdapter implements Adapter<CatchClause, Java8Parser.CatchClauseContext> {
+
     public CatchClause adapt(Java8Parser.CatchClauseContext context, AdapterParameters adapterParameters) {
 
         /*
@@ -49,8 +50,9 @@ public class CatchClauseContextAdapter implements Adapter<CatchClause, Java8Pars
         AdapterUtil.setPosition(parameter, context);
         AdapterUtil.setVariableModifiers(context.catchFormalParameter().variableModifiers(), parameter, adapterParameters);
 
-        List<Type> typeList = new LinkedList<Type>();
-        for (Java8Parser.TypeContext typeContext : context.catchFormalParameter().type()) {
+        List<Java8Parser.TypeContext> tls = context.catchFormalParameter().type();
+        List<Type> typeList = new ArrayList<>(tls.size());
+        for (Java8Parser.TypeContext typeContext : tls) {
             typeList.add(Adapters.getTypeContextAdapter().adapt(typeContext, adapterParameters));
         }
         parameter.setTypes(typeList);

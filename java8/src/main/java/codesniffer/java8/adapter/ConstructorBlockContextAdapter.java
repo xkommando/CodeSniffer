@@ -46,7 +46,7 @@ public class ConstructorBlockContextAdapter implements Adapter<BlockStmt, Java8P
         AdapterUtil.setComments(blockStmt, context, adapterParameters);
         AdapterUtil.setPosition(blockStmt, context);
 
-        List<Statement> statementList = new LinkedList<Statement>();
+        List<Statement> statementList = new ArrayList<>(4);
 
         if (context.explicitConstructorInvocation() != null) {
             statementList.add(Adapters.getExplicitConstructorInvocationContextAdapter().adapt(context.explicitConstructorInvocation(), adapterParameters));

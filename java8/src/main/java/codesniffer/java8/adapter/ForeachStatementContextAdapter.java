@@ -50,9 +50,11 @@ public class ForeachStatementContextAdapter implements Adapter<ForeachStmt, Java
         VariableDeclarationExpr variableDeclarationExpr = new VariableDeclarationExpr();
 
         int modifiers = 0;
-        List<AnnotationExpr> annotations = new LinkedList<AnnotationExpr>();
+        ArrayList<AnnotationExpr> annotations = new ArrayList<>();
         if (context.variableModifiers() != null) {
-            for (Java8Parser.AnnotationContext annotationContext : context.variableModifiers().annotation()) {
+            List<Java8Parser.AnnotationContext> als = context.variableModifiers().annotation();
+            annotations.ensureCapacity(als.size());
+            for (Java8Parser.AnnotationContext annotationContext : als) {
                 AnnotationExpr annotationExpr = Adapters.getAnnotationContextAdapter().adapt(annotationContext, adapterParameters);
                 annotations.add(annotationExpr);
             }
@@ -68,7 +70,7 @@ public class ForeachStatementContextAdapter implements Adapter<ForeachStmt, Java
         variableDeclarationExpr.setAnnotations(annotations);
         variableDeclarationExpr.setType(Adapters.getTypeContextAdapter().adapt(context.type(), adapterParameters));
 
-        List<VariableDeclarator> variableDeclaratorList = new LinkedList<VariableDeclarator>();
+        List<VariableDeclarator> variableDeclaratorList = new ArrayList<>(1);
         VariableDeclarator variableDeclarator = new VariableDeclarator();
         VariableDeclaratorId variableDeclaratorId = new VariableDeclaratorId();
         variableDeclaratorId.setName(context.Identifier().getText());

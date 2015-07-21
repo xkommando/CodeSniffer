@@ -27,12 +27,13 @@ import java.util.*;
 public class EnumConstantsContextAdapter implements Adapter<List<EnumConstantDeclaration>, Java8Parser.EnumConstantsContext> {
     public List<EnumConstantDeclaration> adapt(Java8Parser.EnumConstantsContext context, AdapterParameters adapterParameters) {
 
-        if (context.enumConstant() == null || context.enumConstant().size() == 0) {
+        List<Java8Parser.EnumConstantContext> els = context.enumConstant();
+        if (els == null || els.size() == 0) {
             return null;
         }
 
-        List<EnumConstantDeclaration> enumConstantDeclarationList = new LinkedList<EnumConstantDeclaration>();
-        for (Java8Parser.EnumConstantContext enumConstantContext : context.enumConstant()) {
+        List<EnumConstantDeclaration> enumConstantDeclarationList = new ArrayList<>(els.size());
+        for (Java8Parser.EnumConstantContext enumConstantContext : els) {
             enumConstantDeclarationList.add(Adapters.getEnumConstantContextAdapter().adapt(enumConstantContext, adapterParameters));
         }
 

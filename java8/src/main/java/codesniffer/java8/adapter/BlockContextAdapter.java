@@ -34,8 +34,9 @@ public class BlockContextAdapter implements Adapter<BlockStmt, Java8Parser.Block
         AdapterUtil.setComments(blockStmt, context, adapterParameters);
         AdapterUtil.setPosition(blockStmt, context);
 
-        List<Statement> blockStmtList = new ArrayList<>(8);
-        for (Java8Parser.BlockStatementContext blockStatementContext : context.blockStatement()) {
+        List<Java8Parser.BlockStatementContext> bls = context.blockStatement();
+        List<Statement> blockStmtList = new ArrayList<>(bls.size());
+        for (Java8Parser.BlockStatementContext blockStatementContext : bls) {
             blockStmtList.add(Adapters.getBlockStatementContextAdapter().adapt(blockStatementContext, adapterParameters));
         }
 

@@ -25,13 +25,13 @@ import codesniffer.java8.*;
 import java.util.*;
 
 public class CatchesContextAdapter implements Adapter<List<CatchClause>, Java8Parser.CatchesContext> {
-    public List<CatchClause> adapt(Java8Parser.CatchesContext context, AdapterParameters adapterParameters) {
 
-        List<CatchClause> catchClauseList = new LinkedList<CatchClause>();
-        for (Java8Parser.CatchClauseContext catchClauseContext : context.catchClause()) {
+    public List<CatchClause> adapt(Java8Parser.CatchesContext context, AdapterParameters adapterParameters) {
+        List<Java8Parser.CatchClauseContext> cls = context.catchClause();
+        List<CatchClause> catchClauseList = new ArrayList<>(cls.size());
+        for (Java8Parser.CatchClauseContext catchClauseContext : cls) {
             catchClauseList.add(Adapters.getCatchClauseContextAdapter().adapt(catchClauseContext, adapterParameters));
         }
-
         return catchClauseList;
     }
 }

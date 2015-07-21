@@ -42,8 +42,9 @@ public class InterfaceFieldDeclarationContextAdapter implements Adapter<BodyDecl
         AdapterUtil.setPosition(fieldDeclaration, context);
         fieldDeclaration.setType(Adapters.getTypeContextAdapter().adapt(context.type(), adapterParameters));
 
-        List<VariableDeclarator> variableDeclaratorList = new LinkedList<VariableDeclarator>();
-        for (Java8Parser.VariableDeclaratorContext variableDeclaratorContext : context.variableDeclarator()) {
+        List<Java8Parser.VariableDeclaratorContext> vls = context.variableDeclarator();
+        List<VariableDeclarator> variableDeclaratorList = new ArrayList<>(vls.size());
+        for (Java8Parser.VariableDeclaratorContext variableDeclaratorContext : vls) {
             variableDeclaratorList.add(Adapters.getVariableDeclaratorContextAdapter().adapt(variableDeclaratorContext, adapterParameters));
         }
         fieldDeclaration.setVariables(variableDeclaratorList);

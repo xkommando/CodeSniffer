@@ -65,9 +65,11 @@ object CrossMatch {
   }
 
   def main(args: Array[String]): Unit = {
-    var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
+//    var path2lib: String = "E:\\research\\top\\guava\\guava\\src"
+    val path2lib = "E:\\research\\top\\guava\\guava\\src\\com\\google\\common\\collect"
 //    var path2lib: String = "E:\\research\\top\\jdk-1.7\\java\\util\\concurrent"
-    var path2Apps = Array("E:\\\\research\\\\top\\\\h2-1.4.187-sources")//,
+    //var path2Apps = Array("E:\\\\research\\\\top\\\\h2-1.4.187-sources")//,
+    val path2Apps = Array("E:\\research\\top\\h2-1.4.187-sources\\org\\h2\\api")
 //      "E:\\research\\top\\derby")//,
 //      "E:\\research\\top\\Openfire",
 //      "E:\\research\\top\\spring-framework",

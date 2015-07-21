@@ -31,8 +31,9 @@ public class QualifiedNameListContextAdapter implements Adapter<List<NameExpr>, 
             return null;
         }
 
-        List<NameExpr> nameExprList = new LinkedList<NameExpr>();
-        for (Java8Parser.QualifiedNameContext qualifiedNameContext : context.qualifiedName()) {
+        List<Java8Parser.QualifiedNameContext> cls = context.qualifiedName();
+        List<NameExpr> nameExprList = new ArrayList<>(cls.size());
+        for (Java8Parser.QualifiedNameContext qualifiedNameContext : cls) {
             nameExprList.add(Adapters.getQualifiedNameContextAdapter().adapt(qualifiedNameContext, adapterParameters));
         }
 

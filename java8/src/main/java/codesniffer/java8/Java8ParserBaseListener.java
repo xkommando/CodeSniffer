@@ -1,14 +1,15 @@
-// Generated from Java7Parser.g4 by ANTLR 4.5
+// Generated from Java8Parser.g4 by ANTLR 4.5
 
 package codesniffer.java8;
 
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
- * This class provides an empty implementation of {@link Java8ParserListener},
+ * This class provides an empty implementation of {@link codesniffer.java8.Java8ParserListener},
  * which can be extended to create a listener which only needs to handle a subset
  * of the available methods.
  */
@@ -1345,6 +1346,18 @@ public class Java8ParserBaseListener implements Java8ParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIdentifierSuffix(Java8Parser.IdentifierSuffixContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterTypeParamCall(Java8Parser.TypeParamCallContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitTypeParamCall(Java8Parser.TypeParamCallContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

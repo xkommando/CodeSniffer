@@ -31,9 +31,11 @@ public class ClassOrInterfaceTypeContextAdapter implements Adapter<ClassOrInterf
         AdapterUtil.setComments(classOrInterfaceType, context, adapterParameters);
         AdapterUtil.setPosition(classOrInterfaceType, context);
 
-        List<ClassOrInterfaceType> scopes = new LinkedList<ClassOrInterfaceType>();
 
-        for (Java8Parser.IdentifierTypeArgumentContext identifierTypeArgumentContext : context.identifierTypeArgument())  {
+        List<Java8Parser.IdentifierTypeArgumentContext> ils = context.identifierTypeArgument();
+        List<ClassOrInterfaceType> scopes = new ArrayList<>(ils.size());
+
+        for (Java8Parser.IdentifierTypeArgumentContext identifierTypeArgumentContext : ils)  {
 
             ClassOrInterfaceType scope = new ClassOrInterfaceType();
             scope.setTypeArgs(Adapters.getTypeArgumentsContextAdapter().adapt(identifierTypeArgumentContext.typeArguments(), adapterParameters));

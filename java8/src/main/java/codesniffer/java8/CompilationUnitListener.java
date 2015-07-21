@@ -24,11 +24,7 @@ import codesniffer.java8.adapter.*;
 import org.antlr.v4.runtime.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Mike De Haan
- * Date: 11/28/12
- * Time: 10:55 PM
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class CompilationUnitListener extends Java8ParserBaseListener {
 

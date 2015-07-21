@@ -45,7 +45,7 @@ class SrcScanner[F](val context: Context[F]) {
         val walker = new ParseTreeWalker
 
         // Fills out the compilationUnit object
-        val listener: CompilationUnitListener = new CompilationUnitListener(tokens)
+        val listener = new CompilationUnitListener(tokens)
         walker.walk(listener, tree)
         listener.getCompilationUnit
 
@@ -53,6 +53,7 @@ class SrcScanner[F](val context: Context[F]) {
         case e: Exception =>
           throw new RuntimeException(s"Could not parse file ${src.getPath}", e)
       }
+
       try {
         fileVisitor.visit(cu, context)
       } catch {

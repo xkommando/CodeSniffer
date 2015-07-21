@@ -98,7 +98,7 @@ public final class ASTHelper {
      * @return instance of {@link codesniffer.api.body.FieldDeclaration}
      */
     public static FieldDeclaration createFieldDeclaration(int modifiers, Type type, VariableDeclarator variable) {
-        List<VariableDeclarator> variables = new ArrayList<VariableDeclarator>();
+        List<VariableDeclarator> variables = new ArrayList<VariableDeclarator>(4);
         variables.add(variable);
         FieldDeclaration ret = new FieldDeclaration(modifiers, type, variables);
         return ret;
@@ -131,7 +131,7 @@ public final class ASTHelper {
      * @return instance of {@link codesniffer.api.expr.VariableDeclarationExpr}
      */
     public static VariableDeclarationExpr createVariableDeclarationExpr(Type type, String name) {
-        List<VariableDeclarator> vars = new ArrayList<VariableDeclarator>();
+        List<VariableDeclarator> vars = new ArrayList<VariableDeclarator>(8);
         vars.add(new VariableDeclarator(new VariableDeclaratorId(name)));
         return new VariableDeclarationExpr(type, vars);
     }
@@ -148,7 +148,7 @@ public final class ASTHelper {
     public static void addParameter(MethodDeclaration method, Parameter parameter) {
         List<Parameter> parameters = method.getParameters();
         if (parameters == null) {
-            parameters = new ArrayList<Parameter>();
+            parameters = new ArrayList<Parameter>(4);
             method.setParameters(parameters);
         }
         parameters.add(parameter);
@@ -166,7 +166,7 @@ public final class ASTHelper {
     public static void addArgument(MethodCallExpr call, Expression arg) {
         List<Expression> args = call.getArgs();
         if (args == null) {
-            args = new ArrayList<Expression>();
+            args = new ArrayList<Expression>(4);
             call.setArgs(args);
         }
         args.add(arg);
@@ -184,11 +184,10 @@ public final class ASTHelper {
     public static void addTypeDeclaration(CompilationUnit cu, TypeDeclaration type) {
         List<TypeDeclaration> types = cu.getTypes();
         if (types == null) {
-            types = new ArrayList<TypeDeclaration>();
+            types = new ArrayList<TypeDeclaration>(8);
             cu.setTypes(types);
         }
         types.add(type);
-
     }
 
     /**
@@ -227,7 +226,7 @@ public final class ASTHelper {
     public static void addStmt(BlockStmt block, Statement stmt) {
         List<Statement> stmts = block.getStmts();
         if (stmts == null) {
-            stmts = new ArrayList<Statement>();
+            stmts = new ArrayList<Statement>(8);
             block.setStmts(stmts);
         }
         stmts.add(stmt);
@@ -256,7 +255,7 @@ public final class ASTHelper {
     public static void addMember(TypeDeclaration type, BodyDeclaration decl) {
         List<BodyDeclaration> members = type.getMembers();
         if (members == null) {
-            members = new ArrayList<BodyDeclaration>();
+            members = new ArrayList<BodyDeclaration>(8);
             type.setMembers(members);
         }
         members.add(decl);
