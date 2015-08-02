@@ -26,7 +26,6 @@ import codesniffer.api.comments.*;
 import codesniffer.api.expr.*;
 import codesniffer.api.stmt.*;
 import codesniffer.api.type.*;
-import scala.*;
 
 import java.util.*;
 
@@ -627,7 +626,7 @@ public abstract class VoidVisitorAdapter<A> implements VoidVisitor<A> {
 
     @Override
     public void visit(StructDeclaration a, A arg) {
-        throw new NotImplementedError();
+        throw new NoSuchMethodError();
     }
 
     @Override public void visit(final SingleMemberAnnotationExpr n, final A arg) {

@@ -27,7 +27,6 @@ import codesniffer.api.comments.*;
 import codesniffer.api.expr.*;
 import codesniffer.api.stmt.*;
 import codesniffer.api.type.*;
-import scala.*;
 
 import java.lang.*;
 import java.lang.Boolean;
@@ -120,7 +119,7 @@ public class EqualsVisitor implements GenericVisitor<Boolean, Node> {
 
     @Override
     public java.lang.Boolean visit(StructDeclaration a, Node arg) {
-        throw new NotImplementedError();
+        throw new NoSuchMethodError();
     }
 
     @Override public Boolean visit(final CompilationUnit n1, final Node arg) {

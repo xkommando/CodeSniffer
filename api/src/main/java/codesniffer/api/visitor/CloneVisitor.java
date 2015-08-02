@@ -26,7 +26,6 @@ import codesniffer.api.comments.*;
 import codesniffer.api.expr.*;
 import codesniffer.api.stmt.*;
 import codesniffer.api.type.*;
-import scala.*;
 
 import java.util.*;
 
@@ -34,7 +33,7 @@ public class CloneVisitor implements GenericVisitor<Node, Object> {
 
     @Override
     public Node visit(StructDeclaration a, Object arg) {
-        throw new NotImplementedError();
+        throw new NoSuchMethodError();
     }
 
     @Override

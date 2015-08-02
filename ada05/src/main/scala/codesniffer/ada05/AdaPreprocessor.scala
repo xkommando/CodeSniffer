@@ -12,11 +12,6 @@ import scala.collection.JavaConversions._
  * Created by Bowen Cai on 8/1/2015.
  */
 
-
-class PreprocessContext {
-
-}
-
 class AdaPreprocessor {
 
   val KEY_WORDS = {
@@ -42,7 +37,6 @@ class AdaPreprocessor {
     var idx = 0
     while (idx != 托肯序列.length) {
       var tk = 托肯序列.get(idx)
-      idx += 1
 
       var typeCode = tk.getType
       if (Ada05Lexer.ABORT <= typeCode && typeCode < Ada05Lexer.USE) {
@@ -64,7 +58,10 @@ class AdaPreprocessor {
             idx += 1
             tk = 托肯序列.get(idx)
             typeCode = tk.getType
-//            if (typeCode == Ada05Lexer.Identifier)
+            if (typeCode == Ada05Lexer.Identifier) {
+              val name = tk.getText
+              println("With " + name)
+            }
 
 
             // skip the rest
@@ -82,6 +79,8 @@ class AdaPreprocessor {
           case _ =>
         }
       }
+
+      idx += 1
     } // while
 
     val f = new File("D:\\t.ada")

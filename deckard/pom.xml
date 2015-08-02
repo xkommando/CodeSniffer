@@ -12,18 +12,18 @@
     <artifactId>deckard</artifactId>
 
     <dependencies>
+
         <dependency>
-            <groupId>codesniffer</groupId>
-            <artifactId>api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala-version}</version>
         </dependency>
 
         <dependency>
             <groupId>codesniffer</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>java8</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -31,7 +31,12 @@
             <version>${acommon-math-version}</version>
         </dependency>
 
-
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit-version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

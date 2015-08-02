@@ -1,3 +1,5 @@
+package codesniffer.ada05.test
+
 import java.io.{File, FileInputStream}
 
 import codesniffer.ada05.{AdaPreprocessor}
