@@ -96,8 +96,9 @@ public final class AdapterUtil {
     }
 
     private static List<AnnotationExpr> getAnnotations(Java8Parser.VariableModifiersContext context, AdapterParameters adapterParameters) {
-        List<AnnotationExpr> annotations = new LinkedList<AnnotationExpr>();
-        for (Java8Parser.AnnotationContext annotationContext : context.annotation()) {
+        List<Java8Parser.AnnotationContext> als = context.annotation();
+        List<AnnotationExpr> annotations = new ArrayList<>(als.size());
+        for (Java8Parser.AnnotationContext annotationContext : als) {
             AnnotationExpr annotationExpr = Adapters.getAnnotationContextAdapter().adapt(annotationContext, adapterParameters);
             annotations.add(annotationExpr);
         }
@@ -128,7 +129,7 @@ public final class AdapterUtil {
 
     public static void setModifiers(List<Java8Parser.ModifierContext> modifierList, BodyDeclaration typeDeclaration, AdapterParameters adapterParameters) {
         int modifiers = 0;
-        List<AnnotationExpr> annotations = new LinkedList<AnnotationExpr>();
+        List<AnnotationExpr> annotations = new ArrayList<>(modifierList.size());
         for (Java8Parser.ModifierContext modifierContext : modifierList) {
             if (hasModifier(modifierContext.PUBLIC())) {
                 modifiers |= ModifierSet.PUBLIC;
@@ -241,7 +242,7 @@ public final class AdapterUtil {
     }
 
     public static <T> List<T> singleElementList(T element) {
-        List<T> newElementList = new LinkedList<T>();
+        List<T> newElementList = new ArrayList<>(1);
         newElementList.add(element);
         return newElementList;
     }
@@ -265,11 +266,12 @@ public final class AdapterUtil {
         Token stopToken = parserRuleContext.getStop();
 
         List<Token> commentTokens;
-        List<Comment> internalCommentList = new LinkedList<Comment>();
+        ArrayList<Comment> internalCommentList = new ArrayList<>();
 
         // Checking to the right of the start token will check inside the statement
         commentTokens = tokens.getHiddenTokensToRight(startToken.getTokenIndex(), Java8Lexer.COMMENTS);
         if (commentTokens != null) {
+            internalCommentList.ensureCapacity(commentTokens.size());
             for (Token commentToken : commentTokens) {
 
                 // Skip already claimed comments (prevents comment repeats)

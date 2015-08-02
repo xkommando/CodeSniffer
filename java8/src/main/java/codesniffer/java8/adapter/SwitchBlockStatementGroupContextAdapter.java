@@ -46,8 +46,9 @@ public class SwitchBlockStatementGroupContextAdapter implements Adapter<SwitchEn
         AdapterUtil.setPosition(switchEntryStmt, context);
 
         if (context.blockStatement() != null && context.blockStatement().size() > 0) {
-            List<Statement> blockStmtList = new LinkedList<Statement>();
-            for (Java8Parser.BlockStatementContext blockStatementContext : context.blockStatement()) {
+            List<Java8Parser.BlockStatementContext> bls = context.blockStatement();
+            List<Statement> blockStmtList = new ArrayList<>(bls.size());
+            for (Java8Parser.BlockStatementContext blockStatementContext : bls) {
                 blockStmtList.add(Adapters.getBlockStatementContextAdapter().adapt(blockStatementContext, adapterParameters));
             }
             switchEntryStmt.setStmts(blockStmtList);

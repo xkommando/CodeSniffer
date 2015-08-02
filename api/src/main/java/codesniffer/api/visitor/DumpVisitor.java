@@ -26,6 +26,7 @@ import codesniffer.api.comments.*;
 import codesniffer.api.expr.*;
 import codesniffer.api.stmt.*;
 import codesniffer.api.type.*;
+import scala.*;
 
 import java.util.*;
 
@@ -1506,6 +1507,11 @@ public final class DumpVisitor implements VoidVisitor<Object> {
             n.getDefaultValue().accept(this, arg);
         }
         printer.print(";");
+    }
+
+    @Override
+    public void visit(StructDeclaration a, Object arg) {
+        throw new NotImplementedError();
     }
 
     @Override

@@ -70,12 +70,12 @@ public class PositionUtils {
     }
 
     public static AnnotationExpr getLastAnnotation(Node node) {
-        if (node instanceof AnnotableNode){
-            List<AnnotationExpr> annotations = new LinkedList<AnnotationExpr>();
-            annotations.addAll(((AnnotableNode) node).getAnnotations());
-            if (annotations.size()==0){
+        if (node instanceof AnnotableNode) {
+            List<AnnotationExpr> als = ((AnnotableNode) node).getAnnotations();
+            if (als.size()==0){
                 return null;
             }
+            List<AnnotationExpr> annotations = new ArrayList<>(als);
             sortByBeginPosition(annotations);
             return annotations.get(annotations.size()-1);
         } else {

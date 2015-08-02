@@ -26,8 +26,10 @@ import java.util.*;
 
 public class ExpressionListContextAdapter implements Adapter<List<Expression>, Java8Parser.ExpressionListContext> {
     public List<Expression> adapt(Java8Parser.ExpressionListContext context, AdapterParameters adapterParameters) {
-        List<Expression> expressionList = new LinkedList<Expression>();
-        for (Java8Parser.ExpressionContext expressionContext : context.expression()) {
+
+        List<Java8Parser.ExpressionContext> els = context.expression();
+        List<Expression> expressionList = new ArrayList<>(els.size());
+        for (Java8Parser.ExpressionContext expressionContext : els) {
             expressionList.add(Adapters.getExpressionContextAdapter().adapt(expressionContext, adapterParameters));
         }
         return expressionList;

@@ -25,18 +25,6 @@
             <version>${antlr-version}</version>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>com.github.javaparser</groupId>-->
-            <!--<artifactId>javaparser-core</artifactId>-->
-            <!--<version>${jparser-version}</version>-->
-        <!--</dependency>-->
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>${acommon-math-version}</version>
-        </dependency>
-
         <dependency>
             <groupId>net.liftweb</groupId>
             <artifactId>lift-json_2.10</artifactId>

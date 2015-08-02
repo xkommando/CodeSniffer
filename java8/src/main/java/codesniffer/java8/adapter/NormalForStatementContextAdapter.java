@@ -56,7 +56,7 @@ public class NormalForStatementContextAdapter implements Adapter<ForStmt, Java8P
 
         if (context.forInit() != null) {
             if (context.forInit().localVariableDeclaration() != null) {
-                List<Expression> expressionList = new LinkedList<Expression>();
+                List<Expression> expressionList = new ArrayList<>(1);
                 expressionList.add(Adapters.getLocalVariableDeclarationContextAdapter().adapt(context.forInit().localVariableDeclaration(), adapterParameters));
                 forStmt.setInit(expressionList);
             } else if (context.forInit().expressionList() != null) {

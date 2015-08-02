@@ -45,6 +45,8 @@ public interface GenericVisitor<R, A> {
 
 	public R visit(TypeParameter n, A arg);
 
+    public R visit(StructDeclaration a, A arg);
+
 	public R visit(LineComment n, A arg);
 
 	public R visit(BlockComment n, A arg);

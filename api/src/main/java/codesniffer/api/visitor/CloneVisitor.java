@@ -26,12 +26,18 @@ import codesniffer.api.comments.*;
 import codesniffer.api.expr.*;
 import codesniffer.api.stmt.*;
 import codesniffer.api.type.*;
+import scala.*;
 
 import java.util.*;
 
 public class CloneVisitor implements GenericVisitor<Node, Object> {
 
-	@Override
+    @Override
+    public Node visit(StructDeclaration a, Object arg) {
+        throw new NotImplementedError();
+    }
+
+    @Override
 	public Node visit(CompilationUnit _n, Object _arg) {
 		PackageDeclaration package_ = cloneNodes(_n.getPackage(), _arg);
 		List<ImportDeclaration> imports = visit(_n.getImports(), _arg);
@@ -367,7 +373,7 @@ public class CloneVisitor implements GenericVisitor<Node, Object> {
 		List<List<AnnotationExpr>> arraysAnnotations = _n.getArraysAnnotations();
 		List<List<AnnotationExpr>> _arraysAnnotations = null;
 		if(arraysAnnotations != null){
-			_arraysAnnotations = new LinkedList<List<AnnotationExpr>>();
+			_arraysAnnotations = new ArrayList<>(arraysAnnotations.size());
 			for(List<AnnotationExpr> aux: arraysAnnotations){
 				_arraysAnnotations.add(visit(aux, _arg));
 			}
@@ -441,7 +447,7 @@ public class CloneVisitor implements GenericVisitor<Node, Object> {
 		List<List<AnnotationExpr>> arraysAnnotations = _n.getArraysAnnotations();
 		List<List<AnnotationExpr>> _arraysAnnotations = null;
 		if(arraysAnnotations != null){
-			_arraysAnnotations = new LinkedList<List<AnnotationExpr>>();
+			_arraysAnnotations = new ArrayList<>(arraysAnnotations.size());
 			for(List<AnnotationExpr> aux: arraysAnnotations){
 				_arraysAnnotations.add(visit(aux, _arg));
 			}

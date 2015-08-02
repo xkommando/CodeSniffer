@@ -20,7 +20,10 @@
 package codesniffer.java8.adapter;
 
 import codesniffer.api.expr.*;
+import codesniffer.api.type.*;
 import codesniffer.java8.*;
+
+import java.util.*;
 
 public class UnaryExpressionNotPlusMinusContextAdapter implements Adapter<Expression, Java8Parser.UnaryExpressionNotPlusMinusContext> {
     public Expression adapt(Java8Parser.UnaryExpressionNotPlusMinusContext context, AdapterParameters adapterParameters) {
@@ -157,8 +160,9 @@ public class UnaryExpressionNotPlusMinusContextAdapter implements Adapter<Expres
                     // handle method call with type parameters, e.g.,
                     // guava immutable map ???
                     // Arrays.sort(entryArray, 0, size, Ordering.from(comparator).<K>onKeys());
-
                     MethodCallExpr typeMethodCallExpr = new MethodCallExpr();
+                    List<Type> types =  Adapters.getTypeArgumentsContextAdapter().adapt(selector.typeParamCall().typeArguments(), adapterParameters);
+                    typeMethodCallExpr.setTypeArgs(types);
                     typeMethodCallExpr.setArgs(Adapters.getArgumentsContextAdapter().adapt(selector.typeParamCall().arguments(), adapterParameters));
                     typeMethodCallExpr.setName(selector.typeParamCall().Identifier().getText());
                     typeMethodCallExpr.setScope(leftExpression);

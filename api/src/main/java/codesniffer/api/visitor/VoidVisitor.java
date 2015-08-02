@@ -44,6 +44,8 @@ public interface VoidVisitor<A> {
 
 	void visit(TypeParameter n, A arg);
 
+    void visit(StructDeclaration a, A arg);
+
 	void visit(LineComment n, A arg);
 
 	void visit(BlockComment n, A arg);

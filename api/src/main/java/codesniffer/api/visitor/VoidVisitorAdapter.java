@@ -26,6 +26,7 @@ import codesniffer.api.comments.*;
 import codesniffer.api.expr.*;
 import codesniffer.api.stmt.*;
 import codesniffer.api.type.*;
+import scala.*;
 
 import java.util.*;
 
@@ -624,7 +625,12 @@ public abstract class VoidVisitorAdapter<A> implements VoidVisitor<A> {
 		}
 	}
 
-	@Override public void visit(final SingleMemberAnnotationExpr n, final A arg) {
+    @Override
+    public void visit(StructDeclaration a, A arg) {
+        throw new NotImplementedError();
+    }
+
+    @Override public void visit(final SingleMemberAnnotationExpr n, final A arg) {
 		visitComment(n.getComment(), arg);
 		n.getName().accept(this, arg);
 		n.getMemberValue().accept(this, arg);

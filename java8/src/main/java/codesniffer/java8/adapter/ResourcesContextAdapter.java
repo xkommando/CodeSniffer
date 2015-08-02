@@ -28,7 +28,7 @@ import java.util.*;
 public class ResourcesContextAdapter implements Adapter<List<VariableDeclarationExpr>, Java8Parser.ResourcesContext> {
     public List<VariableDeclarationExpr> adapt(Java8Parser.ResourcesContext context, AdapterParameters adapterParameters) {
 
-        List<VariableDeclarationExpr> resourceList = new LinkedList<>();
+//        List<VariableDeclarationExpr> resourceList = new LinkedList<>();
 //        for (Java8Parser.ResourceContext resourceContext : context.resource()) {
 //            resourceList.add(Adapters.getResourceContextAdapter().adapt(resourceContext, adapterParameters));
 //        }

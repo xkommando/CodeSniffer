@@ -48,6 +48,8 @@ public final class CompilationUnit extends Node {
 
     private List<TypeDeclaration> types;
 
+    private List<BodyDeclaration> members;
+
     public CompilationUnit() {
     }
 
@@ -74,6 +76,14 @@ public final class CompilationUnit extends Node {
         v.visit(this, arg);
     }
 
+    public List<BodyDeclaration> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<BodyDeclaration> members) {
+        this.members = members;
+    }
+
     /**
      * Return a list containing all comments declared in this compilation unit.
      * Including javadocs, line comments and block comments of all types,
@@ -83,8 +93,6 @@ public final class CompilationUnit extends Node {
      * @return list with all comments of this compilation unit or
      *         <code>null</code>
      * @see codesniffer.api.comments.DocumentComment
-     * @see com.github.javaparser.ast.comments.LineComment
-     * @see com.github.javaparser.ast.comments.BlockComment
      */
     public List<Comment> getComments() {
         return this.getAllContainedComments();

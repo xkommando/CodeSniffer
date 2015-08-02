@@ -675,8 +675,9 @@ public abstract class ModifierVisitorAdapter<A> implements GenericVisitor<Node, 
 	
 	@Override public Node visit(MultiTypeParameter n, A arg) {
     	visit((BaseParameter) n, arg);
-    	List<Type> types = new LinkedList<Type>();
-    	for (Type type : n.getTypes()) {
+        List<Type> tls = n.getTypes();
+    	List<Type> types = new ArrayList<>(tls);
+    	for (Type type : tls) {
     		types.add((Type) type.accept(this, arg));
     	}
         n.setTypes(types);

@@ -34,7 +34,9 @@
         <module>core</module>
         <module>java8</module>
         <module>webface</module>
-        <module>cpp14</module>
+        <module>clang</module>
+        <module>ada05</module>
+        <module>deckard</module>
     </modules>
 
     <properties>
@@ -56,6 +58,7 @@
         <gp-web-version>2.0</gp-web-version>
 
         <acommon-math-version>3.2</acommon-math-version>
+        <acommon-io-version>2.4</acommon-io-version>
 
         <mvn-compile-plugin>2.3.2</mvn-compile-plugin>
         <mvn-surefire-plugin>2.18.1</mvn-surefire-plugin>
