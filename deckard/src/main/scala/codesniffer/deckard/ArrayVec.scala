@@ -17,7 +17,6 @@ case class ArrayVec[T](indexer: Indexer[T],
   val funcCalls = new ArrayBuffer[FunctionCall]
   private[this] var _count = 0
 
-
   override def count = _count
   def validNodeTypeCount = indexer.maxIndex + 1
   //  override def seq = vector
@@ -79,7 +78,7 @@ case class ArrayVec[T](indexer: Indexer[T],
   }
 
   override def clear(): Unit = {
-    for (i <- 0 until vector.length)
+    for (i <- vector.indices)
       vector(i) = 0
     _count = 0
   }

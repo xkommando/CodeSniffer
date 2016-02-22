@@ -2,6 +2,8 @@ package codesniffer.deckard.vgen
 
 import java.io.{File, FileInputStream, FilenameFilter}
 
+import codesniffer.api.body.MethodDeclaration
+import codesniffer.api.visitor.VoidVisitorAdapter
 import codesniffer.deckard.Location
 import codesniffer.java8.{CompilationUnitListener, Java8Lexer, Java8Parser}
 import org.antlr.v4.runtime

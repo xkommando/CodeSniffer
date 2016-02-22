@@ -57,7 +57,7 @@ object MainScript {
       )
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
     val vecCollector = new MemWriter[String]
-    val scanner = new SrcScanner(new Context(config, null, null, new Indexer[String], vecCollector))
+    val scanner = new SrcScanner(new Context(config, currentLocation = null, data = null, new Indexer[String], vecCollector))
     /** **************************************************************************
       *  generate vectors
       */
@@ -106,11 +106,9 @@ object MainScript {
 //            val dist = ArrayVec.math.EuclideanDist(b)
             if (dist < threshold)
               sortedList.put(dist, (a, b))
-
 //            val dist = a.math.CosineDist(b)
 //            if (dist < 0.01)
 //              sortedList.put(dist, (a, b))
-
           }
         }
         // chop off redundant data
@@ -131,7 +129,6 @@ object MainScript {
         if (result.firstKey() < 0.001) result.pollFirstEntry() // pop a singlar false positive
 
         val t2 = System.currentTimeMillis()
-
         /** **************************************************************************
           * report
           */
@@ -166,3 +163,4 @@ object MainScript {
     //  val t4 = System.currentTimeMillis()
   }
 }
+

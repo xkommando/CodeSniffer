@@ -11,6 +11,7 @@
 /*.bat
 bin/
 build/
+sootOutput/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/

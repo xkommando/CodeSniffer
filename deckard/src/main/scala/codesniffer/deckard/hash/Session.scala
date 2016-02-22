@@ -1,6 +1,6 @@
 package codesniffer.deckard.hash
 
-import codesniffer.core._
+import codesniffer.core.LifeCycle
 import codesniffer.deckard.{Indexer, ArrayVec}
 
 import scala.util.Random

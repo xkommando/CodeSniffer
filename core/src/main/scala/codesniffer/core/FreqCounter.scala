@@ -14,21 +14,24 @@ class FreqCounter extends Serializable {
   private [this] var OFFSET = System.currentTimeMillis()
   private [this] val record = new Int4CircularList(256)
 
+  /**
+   * period in second
+   */
   @BeanProperty var period : Double = 1.0
 
   def count(num : Int) : Unit = {
-    val now : Int = (System.currentTimeMillis - OFFSET).toInt
+    val now = (System.currentTimeMillis - OFFSET).toInt
     this.synchronized {
       for (i <- 1 to num) record add now
-      trimTo(now)
+      trimFrom(now)
     }
   }
 
   def count() : Unit = {
-    val now : Int = (System.currentTimeMillis - OFFSET).toInt
+    val now = (System.currentTimeMillis - OFFSET).toInt
     this synchronized {
       record add now
-      trimTo(now)
+      trimFrom(now)
     }
   }
 
@@ -39,22 +42,22 @@ class FreqCounter extends Serializable {
     }
   }
 
-  def freq : Double = {
-    var count = record.size.toDouble
-    count = count / period
-    count
-  }
+  def freq = record.size.toDouble / period
 
   def freqToNow : Double = {
-    val now : Int = (System.currentTimeMillis - OFFSET).toInt
+    val now = (System.currentTimeMillis - OFFSET).toInt
     this.synchronized {
-      trimTo(now)
+      trimFrom(now)
     }
     freq
   }
 
-  private def trimTo(now : Int) : Unit ={
-    val limit = now - (1000 * this.period).toInt
+  /**
+    * discard records earlier than the timePoint
+    * @param timePoint a time point from OFFSET, in ms
+    */
+  private def trimFrom(timePoint : Int) : Unit = {
+    val limit = timePoint - (1000 * this.period).toInt
     while (!record.isEmpty && record.front < limit)
       record.popFront()
   }

@@ -1,5 +1,6 @@
 package codesniffer.deckard
 
+import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, Builder}
 
 /**
@@ -13,7 +14,7 @@ trait CharacVec[T] {
   type FunctionCall = (String, String)
 
   var data: Option[AnyRef] = None
-  val funcCalls: Builder[FunctionCall, ArrayBuffer[FunctionCall]]
+  val funcCalls: mutable.Builder[FunctionCall, ArrayBuffer[FunctionCall]]
 
 //  val defaultWeight = 1
 
@@ -50,6 +51,7 @@ trait CharacVec[T] {
 
   /**
    * redece to zero
+ *
    * @param name
    * @return
    */
@@ -59,6 +61,7 @@ trait CharacVec[T] {
 
   /**
    * merge one vector to this one, i.e., accumulate occurrence count
+ *
    * @param other
    */
   def merge(other: CharacVec[T]): this.type

@@ -39,16 +39,11 @@ public class CompilationUnitListener extends Java8ParserBaseListener {
     public void exitCompilationUnit(Java8Parser.CompilationUnitContext ctx) {
         AdapterParameters adapterParameters = new AdapterParameters();
         adapterParameters.setTokens(tokens);
-
         compilationUnit = Adapters.getCompilationUnitContextAdapter().adapt(ctx, adapterParameters);
-
         //for (Integer claimedCommentTokenIndex : adapterParameters.getCommentTokensClaimed()) {
             //System.out.println("Claimed Token Index: " + claimedCommentTokenIndex + " ================\n" + tokens.get(claimedCommentTokenIndex).getText());
         //}
-
     }
-
-
     public CompilationUnit getCompilationUnit() {
         return compilationUnit;
     }
