@@ -6,7 +6,7 @@ import java.util
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
 import codesniffer.core._
-import codesniffer.deckard.vgen.{Config, SrcScanner, Context}
+import codesniffer.deckard.vgen.{SkipLocksVecGen, DirScanConfig, SrcScanner, Context}
 import codesniffer.deckard._
 import codesniffer.api.Node
 import codesniffer.api.body.MethodDeclaration
@@ -49,7 +49,7 @@ object NodeCount {
 
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
-    val config = new Config
+    val config = new DirScanConfig
     config.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
@@ -60,8 +60,12 @@ object NodeCount {
 
     val vecCollector = new MemWriter[String]
     val scanner = new SrcScanner(new Context(config, null, null, new Indexer[String], vecCollector))
+    val mv = new SkipLocksVecGen[String]
+    scanner.methodVisitor = mv;
+    mv.classVisitor = scanner.classVisitor
+    scanner.classVisitor.setMethodVisitor(mv)
 
-    scanner.methodVisitor.before = (method: MethodDeclaration, c: Context[String])=> {
+    mv.before = (method: MethodDeclaration, c: Context[String])=> {
       methodCount.incrementAndGet()
       val _stmtNum = method.getBody.getStmts.size()
       topStmtCount.addAndGet(_stmtNum)
@@ -71,8 +75,7 @@ object NodeCount {
       }
       new CounterVec[String](c.currentLocation)
     }
-
-    scanner.methodVisitor.after = (method: MethodDeclaration, last: CharacVec[String], c: Context[String])=> {
+    mv.after = (method: MethodDeclaration, last: CharacVec[String], c: Context[String])=> {
       val c = last.count
       nodeCount.addAndGet(c)
       nodeGrp.synchronized{
@@ -87,7 +90,7 @@ object NodeCount {
 
     dir match {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
-      case src if src.isFile => scanner.scanFile(src)
+      case src if src.isFile => scanner.processFile(src)
     }
 
     println(s"method count: $methodCount, top level stmt count: $topStmtCount")

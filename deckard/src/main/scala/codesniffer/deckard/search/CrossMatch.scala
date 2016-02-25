@@ -22,7 +22,7 @@ object CrossMatch {
 
   type SortedList = util.TreeMap[Double, (CharacVec[String], CharacVec[String])]
 
-  def vgen(path: String, idx: Indexer[String], cfg: Config): MemWriter[String] = {
+  def vgen(path: String, idx: Indexer[String], cfg: DirScanConfig): MemWriter[String] = {
     val dir = new File(path)
     require(dir.exists() && dir.canRead)
     val vs = new MemWriter[String]
@@ -30,8 +30,11 @@ object CrossMatch {
     val scanner = new SrcScanner(new Context[String](cfg, null, null, idx, vs))
     // save exact source to vector, for manually check
 //    scanner.methodVisitor.before = (m: MethodDeclaration, ctx: Context[String]) => new WeightedVec(BasicVecGen.newVec(m, ctx))
-
-    scanner.methodVisitor.after =
+    val mv = new SkipLocksVecGen[String]
+    scanner.methodVisitor = mv;
+    mv.classVisitor = scanner.classVisitor
+    scanner.classVisitor.setMethodVisitor(mv)
+    mv.after =
       (m: MethodDeclaration, v: CharacVec[String], ctx: Context[String]) => {
         if (v.count > 20) {
           v.data = Some(m.toString.intern())
@@ -41,7 +44,7 @@ object CrossMatch {
 
     dir match {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
-      case src if src.isFile => scanner.scanFile(src)
+      case src if src.isFile => scanner.processFile(src)
     }
     System.gc()
     vs
@@ -102,11 +105,11 @@ object CrossMatch {
         || name.endsWith("Test.java") // filter out test file
       )
 
-    val _appConfig = new Config
+    val _appConfig = new DirScanConfig
     _appConfig.filterDirName = fileNameFilter
     _appConfig.filterNode = _nodeFilter
 
-    val _libConfig = new Config
+    val _libConfig = new DirScanConfig
     _libConfig.filterDirName = fileNameFilter
     _libConfig.filterNode = _nodeFilter
 //    in a library, only public method is open to use

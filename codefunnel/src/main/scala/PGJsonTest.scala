@@ -1,6 +1,7 @@
 import java.sql.DriverManager
 
 import net.liftweb.json.{DefaultFormats, Serialization}
+import org.postgresql.jdbc.PgArray
 import org.postgresql.util.PGobject
 
 
@@ -30,15 +31,31 @@ case class Article(title: String, content: String, author: Option[Author])
   */
 object PGJsonTest {
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
+    Class.forName("org.postgresql.Driver")
+
+    t2()
+  }
+
+  def t2(): Unit = {
+    val conn = DriverManager.getConnection(
+      "jdbc:postgresql://localhost:5432/aser_codehouse", "xkom", "123456")
+
+//    val ps = conn.prepareStatement("select src_impl from \"procedure\" where id < 16081 and id > 16078")
+    val ps = conn.prepareStatement(" select src_impl from \"procedure\" where \"class\" = 'CharacterLiteral'")
+    val rs = ps.executeQuery()
+    while (rs.next()) {
+      println(rs.getString(1))
+    }
+  }
+  def t1(): Unit = {
 
     val addr = new Address("str", Some("cty"))
     val au = Author("na", "@", None)
     val article = new Article("t name22222222", "cont", Some(au))
     val jsonStr = Serialization.writePretty(article)(DefaultFormats)
-    println(jsonStr)
+//    println(jsonStr)
 
-    Class.forName("org.postgresql.Driver")
     val conn = DriverManager.getConnection(
           "jdbc:postgresql://localhost:5432/aser_codehouse", "xkom", "123456")
 
@@ -47,21 +64,28 @@ object PGJsonTest {
     pgj.setType("json")
     pgj.setValue(jsonStr)
     ps.setObject(1, pgj)
+    ps.close()
 
-    ps.executeUpdate()
+//    ps.executeUpdate()
 
 //    -- CREATE TYPE lex_token AS("type" INT, "line" INT, "index" INT, "text" TEXT);
 //    -- alter table jtest add column arr lex_token[]
 //      -- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
 
     val stmt = conn.createStatement()
-    val rs = stmt.executeQuery("select data from jtest where id = 4")
+    stmt.setQueryTimeout(999)
+    val rs = stmt.executeQuery("select data, arr from jtest where id = 10")
     while (rs.next()) {
       val pgo = rs.getObject(1).asInstanceOf[PGobject]
       println(pgo.getClass.getCanonicalName)
       println(pgo)
+      val a2 = rs.getObject(2).asInstanceOf[PgArray] //.getArray //.asInstanceOf[Array[PGobject]]
+      val arr = a2.getArray
+      println(arr)
     }
-    ps.close()
+
+    rs.close()
+    stmt.close()
     conn.close()
   }
 

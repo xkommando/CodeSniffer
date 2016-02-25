@@ -11,7 +11,7 @@ import codesniffer.api.{Node, PackageDeclaration}
 /**
  * Created by Bowen Cai on 4/12/2015.
  */
-class Config {
+class DirScanConfig {
 
   // no operation
   private def NOP[T](p:T):Boolean = false

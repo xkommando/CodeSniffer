@@ -29,7 +29,6 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP-java6</artifactId>
             <version>2.1.0</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

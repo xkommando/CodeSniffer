@@ -5,7 +5,7 @@ import java.util
 
 import codesniffer.core._
 import codesniffer.deckard.{ArrayVec, Indexer, MemWriter}
-import codesniffer.deckard.vgen.{Context, SrcScanner, Config}
+import codesniffer.deckard.vgen.{Context, SrcScanner, DirScanConfig}
 import codesniffer.deckard.vgen._
 import codesniffer.api.Node
 import codesniffer.api.expr.ThisExpr
@@ -50,7 +50,7 @@ object MainScript {
     // package file
     // test classes
     // meaningless statements
-    val config = new Config
+    val config = new DirScanConfig
     config.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         || name.endsWith("Tests.java") // filter out test file
@@ -58,13 +58,17 @@ object MainScript {
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
     val vecCollector = new MemWriter[String]
     val scanner = new SrcScanner(new Context(config, currentLocation = null, data = null, new Indexer[String], vecCollector))
+    val mv = new SkipLocksVecGen[String]
+    scanner.methodVisitor = mv;
+    mv.classVisitor = scanner.classVisitor
+    scanner.classVisitor.setMethodVisitor(mv)
     /** **************************************************************************
       *  generate vectors
       */
     val tv1 = System.currentTimeMillis()
     dir match {
       case where if where.isDirectory => scanner.scanDir(where, recursive = true)
-      case src if src.isFile => scanner.scanFile(src)
+      case src if src.isFile => scanner.processFile(src)
     }
     val tv2 = System.currentTimeMillis()
     /** **************************************************************************

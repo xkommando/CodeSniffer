@@ -6,7 +6,7 @@ import java.util
 
 import codesniffer.core._
 import codesniffer.deckard.{ArrayVec, Indexer, CharacVec, MemWriter}
-import codesniffer.deckard.vgen.{Context, SlicerScanner, Config}
+import codesniffer.deckard.vgen.{Context, SlicerScanner, DirScanConfig}
 import codesniffer.api.Node
 import codesniffer.api.body.MethodDeclaration
 import codesniffer.api.expr.ThisExpr
@@ -38,7 +38,7 @@ object LibSearch {
     var resultSizeTotal = 200
 
     val _nodeFilter = (node: Node)=>node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
-    val _libConfig = new Config
+    val _libConfig = new DirScanConfig
     _libConfig.filterDirName = (name: String) => (
       name.equals("package-info.java") // filter out package file
         //        || name.endsWith("Tests.java") // filter out test file
@@ -46,7 +46,7 @@ object LibSearch {
       )
     _libConfig.filterNode = _nodeFilter
     _libConfig.filterMethod = (m: MethodDeclaration) => !Modifier.isPublic(m.getModifiers)
-    val _appCfg = new Config
+    val _appCfg = new DirScanConfig
 //    _appCfg.filterDirName = (name: String) => (
 //      name.equals("package-info.java") // filter out package file
 //        || name.endsWith("Test.java") // filter out test file

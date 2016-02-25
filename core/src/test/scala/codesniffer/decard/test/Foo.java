@@ -5,6 +5,7 @@ package codesniffer.decard.test;
  */
 public class Foo {
   public static void main(String[] args) {
+//    int enum = 1;
     Foo f = new Foo();
     int a = 7;
     int b = 14;

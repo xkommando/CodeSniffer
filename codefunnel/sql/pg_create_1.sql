@@ -4,15 +4,15 @@
 -- Bowen Cai feedback2bowen@outlook.com
 -- 2/20/2016
 
-
--- CREATE USER $name  WITH ENCRYPTED PASSWORD 'psw';
+-- how to add new users:
+-- CREATE USER $name  WITH ENCRYPTED PASSWORD $psw;
 -- GRANT CONNECT ON DATABASE aser_codehouse to $name;
 -- GRANT USAGE ON SCHEMA $public to $name;
 -- GRANT all privileges on database aser_codehouse to $name;
 
-DROP TABLE IF EXISTS cc_type;
-DROP TABLE IF EXISTS cc_bench_bellon;
-DROP TABLE IF EXISTS cc_bench_Krutz_Le;
+
+DROP TABLE IF EXISTS cclone_bench_bellon;
+DROP TABLE IF EXISTS cclone_bench_krutz_le;
 
 DROP TABLE IF EXISTS "call_relation";
 DROP TABLE IF EXISTS "procedure";
@@ -22,29 +22,33 @@ DROP TABLE IF EXISTS "poj_tag";
 DROP TABLE IF EXISTS language_src;
 DROP TABLE IF EXISTS "project";
 DROP TABLE IF EXISTS license;
+DROP TYPE IF EXISTS lex_token CASCADE;
 
 DROP TABLE IF EXISTS license;
 CREATE TABLE "license" (
-  id             SERIAL       NOT NULL  PRIMARY KEY,
+  id             SMALLINT     NOT NULL  PRIMARY KEY,
   "name"         VARCHAR(128) NOT NULL,
   "version"      SMALLINT     NOT NULL,
   "release_date" DATE         NOT NULL DEFAULT now(),
   "url"          TEXT
 );
 
+CREATE INDEX idx_license_name ON "license" ("name");
+
 DROP TABLE IF EXISTS language_src;
 CREATE TABLE language_src (
-  id            SERIAL       NOT NULL  PRIMARY KEY,
+  id            SMALLINT     NOT NULL  PRIMARY KEY,
   spec          VARCHAR(128),
   "name"        VARCHAR(128) NOT NULL,
   "version"     TEXT         NOT NULL,
   "release_date" DATE        NOT NULL,
   "encoding"    VARCHAR(32),
-  license_id    INT          REFERENCES "license" (id) ON DELETE RESTRICT,
+  license_id    SMALLINT     REFERENCES "license" (id) ON DELETE RESTRICT,
   developers    TEXT [],
   "description" TEXT,
   "url"         TEXT
 );
+CREATE INDEX idx_lang_src_name ON "language_src" ("name");
 
 COMMENT ON COLUMN language_src."developers" IS 'this is an array of string each represent a developer';
 COMMENT ON COLUMN language_src."encoding" IS 'source code encoding';
@@ -59,14 +63,18 @@ CREATE TABLE "project" (
   frontend         VARCHAR(128),
   "target"         VARCHAR(128),
   "timestamp"      TIMESTAMP    NOT NULL DEFAULT now(),
-  license_id       INT          NOT NULL REFERENCES "license" (id)  ON DELETE RESTRICT ,
+  license_id       SMALLINT     NOT NULL REFERENCES "license" (id)  ON DELETE RESTRICT ,
 
-  "directory"      JSON,
-  "class_hierachy" JSON,
+  "directory"      JSONB,
+  "class_hierachy" JSONB,
   developers       TEXT [],
   "description"    TEXT,
   "url"            TEXT
 );
+
+
+CREATE INDEX idx_poj_classes ON "project" USING GIN ("class_hierachy");
+CREATE INDEX idx_poj_name ON "project" ("name");
 
 COMMENT ON COLUMN "project".build_sys IS 'how the project is build, e.g. CMAKE, ANT, Gradle';
 COMMENT ON COLUMN "project".frontend IS 'frontend(lexer, syntax analyzer) used in generating data of table "procedure" ';
@@ -77,8 +85,8 @@ COMMENT ON COLUMN "project"."class_hierachy" IS 'json representation of the obje
 
 DROP TABLE IF EXISTS "r_poj_lang";
 CREATE TABLE "r_poj_lang" (
-  id_poj          INT REFERENCES "project" (id)       ON DELETE CASCADE,
-  id_lang         INT REFERENCES "language_src" (id)  ON DELETE CASCADE,
+  id_poj          INT         REFERENCES "project" (id)       ON DELETE CASCADE,
+  id_lang         SMALLINT    REFERENCES "language_src" (id)  ON DELETE CASCADE,
   PRIMARY KEY (id_poj, id_lang)
 );
 
@@ -91,13 +99,14 @@ CREATE TABLE "poj_tag" (
 
 DROP TABLE IF EXISTS "r_poj_tag";
 CREATE TABLE "r_poj_tag" (
-  id_poj          INT REFERENCES "project" (id) ON DELETE CASCADE,
-  id_tag          INT REFERENCES "poj_tag" (id) ON DELETE CASCADE,
+  id_poj          SMALLINT    REFERENCES "project" (id) ON DELETE CASCADE,
+  id_tag          INT         REFERENCES "poj_tag" (id) ON DELETE CASCADE,
   PRIMARY KEY (id_poj, id_tag)
 );
 
-DROP TYPE IF EXISTS lex_token;
-CREATE TYPE lex_token AS("type" INT, "line" INT, "index" INT, "text" TEXT);
+-- case class SToken(index: Int, tp: Int, line: Int, column: Int, channel: Int, startIdx: Int, stopIdx: Int, text: String) extends Token {
+DROP TYPE IF EXISTS lex_token CASCADE;
+CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
 -- to see what exactly the token type is, refer the lexer's vocabulary
 -- e.g., for antlr, Java8Lexer.getVocabulary.getSymbolicName(int_type) -> sting
 
@@ -106,7 +115,7 @@ CREATE TABLE "procedure" (
   id            SERIAL       NOT NULL  PRIMARY KEY,
   "name"        VARCHAR(512) NOT NULL,
   "name_tokens" VARCHAR(1024),
-  poj_id        INT REFERENCES "project" (id) ON DELETE RESTRICT,
+  poj_id        INT          REFERENCES "project" (id) ON DELETE RESTRICT,
 
   "file"        TEXT         NOT NULL,
   "package"     TEXT,
@@ -120,13 +129,21 @@ CREATE TABLE "procedure" (
 
   "token_seq"   lex_token[],
   "token_count" INT,
-  "ast"         JSON,
+  "ast"         JSONB,
 
   "note"        TEXT
 );
 
 -- full-text search
 CREATE INDEX idx_fs_proc_name ON "procedure" USING GIN (to_tsvector('english', name_tokens));
+CREATE INDEX idx_fs_proc_comment ON "procedure" USING GIN (to_tsvector('english', src_comment));
+
+CREATE INDEX idx_hash_proc_file ON "procedure" USING HASH ("file");
+CREATE INDEX idx_hash_proc_pkg ON "procedure" USING HASH ("package");
+CREATE INDEX idx_hash_proc_class ON "procedure" USING HASH ("class");
+
+-- later
+CREATE INDEX idx_json_proc_ast ON "procedure" USING GIN ("ast");
 
 COMMENT ON COLUMN "procedure"."name_tokens" IS 'a string of lowercased tokens decomposed from method name, used for full text search';
 COMMENT ON COLUMN "procedure".lines IS 'INT4RANGE is a range data-type representing code location within the file';
@@ -151,5 +168,7 @@ CREATE TABLE call_relation (
   PRIMARY KEY (caller, callee)
 );
 
+CREATE INDEX idx_callgraph_caller ON call_relation(caller);
+CREATE INDEX idx_callgraph_callee ON call_relation(callee);
 
 
