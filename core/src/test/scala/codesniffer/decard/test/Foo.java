@@ -13,7 +13,9 @@ public class Foo {
 //			System.out.println(x);
   }
 
-  public int bar(int n) { return n + 42; }
+  public int bar(int n) {
+    return n + 42;
+  }
 
 
 //  public int test() {
@@ -28,3 +30,5 @@ public class Foo {
 //  }
 
 }
+
+

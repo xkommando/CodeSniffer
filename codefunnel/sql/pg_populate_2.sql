@@ -11,7 +11,8 @@ INSERT INTO "license" ("id", "name", "version", "release_date", url) VALUES
   (9, 'LGPL', 3, '2007-6-29', 'http://www.gnu.org/licenses/lgpl-3.0.en.html'),
   (10, 'MIT', 1, '1900-1-1', 'https://opensource.org/licenses/MIT'),
   (11, 'Mozilla', 2, '1900-1-1', 'https://www.mozilla.org/en-US/MPL/'),
-  (12, 'Eclipse', 1, '2004-2-1', 'https://www.eclipse.org/legal/epl-v10.html');
+  (12, 'Eclipse', 1, '2004-2-1', 'https://www.eclipse.org/legal/epl-v10.html'),
+  (13, 'NETBEANS', 8, '2015-11-4', 'https://netbeans.org/downloads/licence/8.1/nb81-LICENSE.txt');
 
 
 INSERT INTO language_src("id", "spec", "name", "version", "release_date") VALUES

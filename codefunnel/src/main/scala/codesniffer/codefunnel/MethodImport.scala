@@ -30,9 +30,12 @@ object MethodImport extends DBSupport {
   val LOG = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]) {
-    importSRC(1, "D:\\__TEMP__\\eclipse-jdtcore\\src")
-//    importSRC(1, "D:\\__jvm\\__temp")
+//    importSRC(1, "D:\\__TEMP__\\eclipse-jdtcore\\src")
+//    importSRC(2, "D:\\__TEMP__\\eclipse-ant\\src")
+    importSRC(3, "D:\\__TEMP__\\j2sdk1.4.0-javax-swing\\src")
+    importSRC(4, "D:\\__TEMP__\\netbeans-javadoc\\src")
   }
+
   def quoteTo(param: String): String = {
     val b = new scala.StringBuilder(param.length * 3 / 2)
     b append '''
@@ -138,6 +141,7 @@ object MethodImport extends DBSupport {
     }
     class TestV extends VoidVisitorAdapter[Context[Int]] {
       override def visit(meDec: MethodDeclaration, ctx: Context[Int]): Unit = {
+
         methodCount += 1
         val ls = meDec.getBeginLine
         val cs = meDec.getBeginColumn
@@ -149,7 +153,13 @@ object MethodImport extends DBSupport {
           (l > ls || l == ls && c >= cs) && (l < le || l == le && c <= ce)
         }
 //        LOG.debug(s"find method ${meDec.getName}  from ${ctx.currentLocation.file}\r\n token count: ${methodTokens.length} code lines: ${(le - ls)}")
-        buf.add(RowData(meDec.getName, meDec.getType.toString, meDec.toString, ctx.currentLocation, methodTokens))
+
+        if (le - ls > 3) {
+          buf.add(RowData(meDec.getName, meDec.getType.toString, meDec.toString,
+            ctx.currentLocation.copy(lineBegin = ls, lineEnd = le),
+            methodTokens))
+        }
+
 //        val doc = meDec.getDocComment
 //        if (doc != null) {
 //          println("doc c  " + doc.getContent)

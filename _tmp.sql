@@ -20,7 +20,7 @@
 -- alter table jtest add column arr lex_token[]
 -- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
 -- truncate table "procedure" cascade;
-alter sequence "procedure_id_seq" start 1;
+-- alter sequence "procedure_id_seq" RESTART  with 1;
 
 
 ant 1.4 apache 1 license target jvm 1.1
@@ -31,3 +31,8 @@ lines: 6220440
  -- select  sum(token_count from "procedure" -- where id > 16080
 -- select  sum(token_count) as TKS, sum(upper(lines) - lower(lines))as LNS from "procedure"  --where id > 16080
 -- select  upper(lines)  from "procedure" where id > 16080
+
+2469020 - 2388836 = 80184
+tks 625236
+per line 7.7975157138581263094881771924573
+
