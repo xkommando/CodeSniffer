@@ -107,7 +107,7 @@ CREATE TABLE "r_poj_tag" (
 -- case class SToken(index: Int, tp: Int, line: Int, column: Int, channel: Int, startIdx: Int, stopIdx: Int, text: String) extends Token {
 DROP TYPE IF EXISTS lex_token CASCADE;
 CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
--- to see what exactly the token type is, refer the lexer's vocabulary
+-- to see what exactly the t0oken type is, refer the lexer's vocabulary
 -- e.g., for antlr, Java8Lexer.getVocabulary.getSymbolicName(int_type) -> sting
 
 DROP TABLE IF EXISTS "procedure";

@@ -8,6 +8,7 @@ import codesniffer.api.expr.ThisExpr
 import codesniffer.api.stmt.EmptyStmt
 import codesniffer.api.visitor.VoidVisitorAdapter
 import codesniffer.api.{CompilationUnit, Node}
+import codesniffer.codefunnel.MethodImport4J._
 import codesniffer.deckard.vgen.{Context, DirScanConfig, SrcScanner}
 import codesniffer.deckard.{ClassScope, Location}
 import codesniffer.java8.{CompilationUnitListener, Java8Lexer, Java8Parser}
@@ -22,14 +23,56 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, StringBuilder}
 import scala.util.Try
 
+case class RowData(name:String, retType:String, funcSrc: String, loc:Location, tokens:Array[SToken])
+
+class InsertBuffer(val pojId:Int) {
+  private val buf = new ArrayBuffer[RowData](256)
+
+  def add(rd: RowData) = {
+    buf += rd
+    if (buf.length > 255)
+      flush()
+  }
+
+  def flush(): Unit = {
+    db.newSession {session => {
+      val stmt = session.connection.createStatement()
+
+      buf.foreach{rd=>
+        val tks = rd.tokens.filter(_.getChannel == 0) // default (value == 0, usefull) tokens only, channel 1 is empty token, channel 2 is comment token
+      val builder = new StringBuilder(tks.length * 70 + 250).append(
+          s"""INSERT INTO \"procedure\"(\"name\", poj_id, \"file\", \"package\", \"class\", \"lines\", src_impl, token_count, token_seq)VALUES (
+                '${rd.name}', $pojId, '${rd.loc.file}', '${rd.loc.scope.parent.toString}', '${rd.loc.scope.asInstanceOf[ClassScope].name}',
+                INT4RANGE(${rd.loc.lineBegin}, ${rd.loc.lineEnd}), ${quoteTo(rd.funcSrc)}, ${tks.length}, ARRAY[
+             """)
+        val strB = tks.foldLeft(builder)((b: mutable.StringBuilder, tk: SToken) => {
+          ////          CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
+          ////-- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
+          b.append(s""" (${tk.getType}, ${tk.getLine}, ${tk.getCharPositionInLine}, ${quoteTo(tk.getText)})::lex_token,""") ///! escape
+          b
+        }
+        )
+        strB.setCharAt(strB.length - 1, ']')
+        strB.append(')')
+        //          println(strB)
+        stmt.addBatch(strB.toString())
+      }
+      stmt.executeBatch()
+    } // db session
+    }// db session
+    LOG.debug("Flushing: " + buf.length)
+    buf.clear()
+  }
+}
 /**
   * Created by Bowen Cai on 2/24/2016.
   */
-object MethodImport extends DBSupport {
+object MethodImport4J extends DBSupport {
 
   val LOG = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]) {
+    super.boot()
 //    importSRC(1, "D:\\__TEMP__\\eclipse-jdtcore\\src")
 //    importSRC(2, "D:\\__TEMP__\\eclipse-ant\\src")
     importSRC(3, "D:\\__TEMP__\\j2sdk1.4.0-javax-swing\\src")
@@ -47,58 +90,16 @@ object MethodImport extends DBSupport {
     b.toString()
   }
 
-  case class RowData(name:String, retType:String, funcSrc: String, loc:Location, tokens:Array[SToken])
 
-  class InsertBuffer(val pojId:Int) {
-    private val buf = new ArrayBuffer[RowData](256)
-
-    def add(rd: RowData) = {
-      buf += rd
-      if (buf.length > 255)
-        flush()
-    }
-
-    def flush(): Unit = {
-      db.newSession {session => {
-        val stmt = session.connection.createStatement()
-
-        buf.foreach{rd=>
-          val tks = rd.tokens.filter(_.getChannel == 0) // default (value == 0, usefull) tokens only, channel 1 is empty token, channel 2 is comment token
-          val builder = new StringBuilder(tks.length * 70 + 250).append(
-            s"""INSERT INTO \"procedure\"(\"name\", poj_id, \"file\", \"package\", \"class\", \"lines\", src_impl, token_count, token_seq)VALUES (
-                '${rd.name}', $pojId, '${rd.loc.file}', '${rd.loc.scope.parent.toString}', '${rd.loc.scope.asInstanceOf[ClassScope].name}',
-                INT4RANGE(${rd.loc.lineBegin}, ${rd.loc.lineEnd}), ${quoteTo(rd.funcSrc)}, ${tks.length}, ARRAY[
-             """)
-          val strB = tks.foldLeft(builder)((b: mutable.StringBuilder, tk: SToken) => {
-            ////          CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
-            ////-- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
-            b.append(s""" (${tk.getType}, ${tk.getLine}, ${tk.getCharPositionInLine}, ${quoteTo(tk.getText)})::lex_token,""") ///! escape
-            b
-          }
-          )
-          strB.setCharAt(strB.length - 1, ']')
-          strB.append(')')
-//          println(strB)
-          stmt.addBatch(strB.toString())
-        }
-        stmt.executeBatch()
-      } // db session
-      }// db session
-      LOG.debug("Flushing: " + buf.length)
-      buf.clear()
-    }
-  }
-
-  def importSRC(pojId: Int, dir:String): Unit = {
-    LOG.info("Booting...")
-    super.boot()
+  def importSRC(pojId: Int, rootDir:String): Unit = {
+    LOG.info("importing " + rootDir)
     val config = new DirScanConfig
     config.filterFile = (f: File) => {
       val name = f.getName
       name.equals("package-info.java") || name.endsWith("Tests.java")
     }
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
-    val context = new Context[Int](config, currentLocation = new Location(dir, 0, 0, null), data = null, indexer = null, vecWriter = null)
+    val context = new Context[Int](config, currentLocation = new Location(rootDir, 0, 0, null), data = null, indexer = null, vecWriter = null)
     val scanner = new SrcScanner[Int](context)
     var tokenSource: STokenSource = null
     var fileCount = 0
@@ -130,7 +131,7 @@ object MethodImport extends DBSupport {
       stream.close()
       if (cu != null) {
         try {
-          scanner.context.currentLocation = scanner.context.currentLocation.copy(file = src.getPath.substring(dir.length))
+          scanner.context.currentLocation = scanner.context.currentLocation.copy(file = src.getPath.substring(rootDir.length).replace("\\","/"))
           scanner.fileVisitor.visit(cu, context)
         } catch {
           case e: Throwable =>
@@ -186,7 +187,7 @@ object MethodImport extends DBSupport {
     scanner.methodVisitor = new TestV
     scanner.classVisitor.methodVisitor = scanner.methodVisitor
 
-    scanner.scanDir(new File(dir), recursive = true)
+    scanner.scanDir(new File(rootDir), recursive = true)
     buf.flush()
   }
 
