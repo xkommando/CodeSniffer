@@ -1,6 +1,6 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.utils
 
-import org.antlr.v4.runtime.{TokenSource, CharStream, TokenFactory, Token}
+import org.antlr.v4.runtime.{CharStream, Token, TokenFactory, TokenSource}
 
 /**
   * Created by Bowen Cai on 2/24/2016.

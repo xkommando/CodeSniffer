@@ -1,12 +1,10 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.utils
 
 import javax.sql.DataSource
 
 import com.caibowen.gplume.resource.ClassLoaderInputStreamProvider
 import gplume.scala.context.{AppContext, ContextBooter}
 import gplume.scala.jdbc.DB
-import org.postgresql.jdbc.PgArray
-import org.postgresql.util.PGobject
 
 /**
   * Created by Bowen Cai on 2/24/2016.
@@ -25,6 +23,17 @@ class DBSupport {
       _bootstrap.boot()
       booted = true
     }
+  }
+
+  def quoteTo(param: String): String = {
+    val b = new scala.StringBuilder(param.length * 3 / 2)
+    b append '''
+    for (c <- param) c match {
+      case ''' => b append ''' append '''
+      case o => b append o
+    }
+    b append '''
+    b.toString()
   }
 
   lazy val datasource :DataSource = AppContext.beanAssembler.getBean("dataSource")

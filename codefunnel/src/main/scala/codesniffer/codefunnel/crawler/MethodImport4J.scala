@@ -1,14 +1,13 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.crawler
 
 import java.io.{File, FileInputStream}
-import java.sql.DriverManager
 
 import codesniffer.api.body.MethodDeclaration
 import codesniffer.api.expr.ThisExpr
 import codesniffer.api.stmt.EmptyStmt
 import codesniffer.api.visitor.VoidVisitorAdapter
 import codesniffer.api.{CompilationUnit, Node}
-import codesniffer.codefunnel.MethodImport4J._
+import codesniffer.codefunnel.utils.{DBSupport, SToken, STokenSource}
 import codesniffer.deckard.vgen.{Context, DirScanConfig, SrcScanner}
 import codesniffer.deckard.{ClassScope, Location}
 import codesniffer.java8.{CompilationUnitListener, Java8Lexer, Java8Parser}
@@ -16,12 +15,11 @@ import org.antlr.v4.runtime
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.atn.PredictionMode
 import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.LoggerFactory
 
 import scala.collection.convert.wrapAsScala._
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, StringBuilder}
-import scala.util.Try
 
 case class RowData(name:String, retType:String, funcSrc: String, loc:Location, tokens:Array[SToken])
 
@@ -35,6 +33,7 @@ class InsertBuffer(val pojId:Int) {
   }
 
   def flush(): Unit = {
+    import MethodImport4J._
     db.newSession {session => {
       val stmt = session.connection.createStatement()
 
@@ -60,7 +59,7 @@ class InsertBuffer(val pojId:Int) {
       stmt.executeBatch()
     } // db session
     }// db session
-    LOG.debug("Flushing: " + buf.length)
+    MethodImport4J.LOG.debug("Flushing: " + buf.length)
     buf.clear()
   }
 }
@@ -77,17 +76,6 @@ object MethodImport4J extends DBSupport {
 //    importSRC(2, "D:\\__TEMP__\\eclipse-ant\\src")
     importSRC(3, "D:\\__TEMP__\\j2sdk1.4.0-javax-swing\\src")
     importSRC(4, "D:\\__TEMP__\\netbeans-javadoc\\src")
-  }
-
-  def quoteTo(param: String): String = {
-    val b = new scala.StringBuilder(param.length * 3 / 2)
-    b append '''
-    for (c <- param) c match {
-      case ''' => b append ''' append '''
-      case o => b append o
-    }
-    b append '''
-    b.toString()
   }
 
 

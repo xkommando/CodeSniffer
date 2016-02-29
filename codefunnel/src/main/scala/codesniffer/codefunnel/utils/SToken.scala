@@ -1,4 +1,4 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.utils
 
 import org.antlr.v4.runtime.{CharStream, Token, TokenSource}
 

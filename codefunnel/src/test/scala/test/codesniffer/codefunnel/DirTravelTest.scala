@@ -1,8 +1,7 @@
 package test.codesniffer.codefunnel
 
 import java.io.File
-
-import codesniffer.codefunnel.DirTravel
+import codesniffer.codefunnel.utils.DirTravel
 import net.liftweb.json.{JsonAST, Printer, DefaultFormats}
 
 /**

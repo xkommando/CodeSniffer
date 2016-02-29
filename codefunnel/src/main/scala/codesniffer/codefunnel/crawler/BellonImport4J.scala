@@ -1,5 +1,6 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.crawler
 
+import codesniffer.codefunnel.utils.DBSupport
 import gplume.scala.jdbc.SQLAux._
 import gplume.scala.jdbc.SQLOperation._
 import org.slf4j.LoggerFactory
@@ -39,11 +40,11 @@ object BellonImport4J extends DBSupport {
 //     do not call step3 from parallel step2
 //        step2_match_update_par(1)
 
-//    step1_load(3, "D:\\__TEMP__\\j2sdk1.4.0-javax-swing.cpf")
-//    step2_match_update_par(3)
+    step1_load(3, "D:\\__TEMP__\\j2sdk1.4.0-javax-swing.cpf")
+    step2_match_update_par(3)
 
-    step1_load(4, "D:\\__TEMP__\\netbeans-javadoc.cpf")
-    step2_match_update_par(4)
+//    step1_load(4, "D:\\__TEMP__\\netbeans-javadoc.cpf")
+//    step2_match_update_par(4)
   }
 
 
@@ -82,16 +83,15 @@ object BellonImport4J extends DBSupport {
       else
         LOG.warn("Failed on " + line)
     }
-    val seqBellon = bellon.toSeq
-    LOG.info(s"${seqBellon.size} raw Bellon data fully parsed!")
-    println(seqBellon.size)
+    LOG.info(s"${bellon.size} raw Bellon data fully parsed!")
     db.newSession { implicit session =>
       sql"DROP TABLE IF EXISTS __bellon_temp".execute()
       sql"""CREATE TABLE __bellon_temp(id SERIAL PRIMARY KEY , "type" SMALLINT,
                    pathf1 TEXT, f1_line1 INT , f1_line2 INT , match_pc_id1 INT, distance1 INT,
                    pathf2 TEXT, f2_line1 INT , f2_line2 INT , match_pc_id2 INT, distance2 INT)""".execute()
 
-      sql"""INSERT INTO __bellon_temp("type" , pathf1 , f1_line1 , f1_line2, pathf2 , f2_line1 , f2_line2)VALUES (?,?,?,?,?,?,?)""".batchInsert(seqBellon)
+      sql"""INSERT INTO __bellon_temp("type" , pathf1 , f1_line1 , f1_line2, pathf2 , f2_line1 , f2_line2)VALUES (?,?,?,?,?,?,?)"""
+        .batchInsert(bellon)
       //      sql"""UPDATE __bellon_temp AS BF1 SET match_pc_id1 = (SELECT )"""
       val t2 = System.currentTimeMillis()
       LOG.info(s"All data stored to data base, step 1 finished, time elapsed: ${t2 - t1} ms")
@@ -189,18 +189,18 @@ from (select PD1.id as proc_id,
           val countCC = sql"SELECT COUNT(1) FROM __bellon_temp".first(colInt).get
           LOG.info(s"$countCC code clone matched, now filter out unstructured data")
 
-          sql"""DELETE FROM __bellon_temp WHERE match_pc_id1 IS NULL OR match_pc_id2 IS NULL""".execute()
-
-          sql"""DELETE FROM __bellon_temp USING __bellon_temp BT
-              WHERE __bellon_temp.match_pc_id1 = BT.match_pc_id1 AND __bellon_temp.match_pc_id2 = BT.match_pc_id2 AND
-                __bellon_temp.id < BT.id""".execute()
-
-          val countClean = sql"SELECT COUNT(1) FROM __bellon_temp".first(colInt).get
-          LOG.info(s"$countClean code clone matched and is going to be imported")
-
-          val t2 = System.currentTimeMillis()
-          LOG.info(s"Step 2 Finished, time elapsed: ${t2 - t1} ms")
-          step3_import_clean()
+//          sql"""DELETE FROM __bellon_temp WHERE match_pc_id1 IS NULL OR match_pc_id2 IS NULL""".execute()
+//
+//          sql"""DELETE FROM __bellon_temp USING __bellon_temp BT
+//              WHERE __bellon_temp.match_pc_id1 = BT.match_pc_id1 AND __bellon_temp.match_pc_id2 = BT.match_pc_id2 AND
+//                __bellon_temp.id < BT.id""".execute()
+//
+//          val countClean = sql"SELECT COUNT(1) FROM __bellon_temp".first(colInt).get
+//          LOG.info(s"$countClean code clone matched and is going to be imported")
+//
+//          val t2 = System.currentTimeMillis()
+//          LOG.info(s"Step 2 Finished, time elapsed: ${t2 - t1} ms")
+//          step3_import_clean()
         }
       case Failure(t) =>
         println(s"Search failed, error:$t")

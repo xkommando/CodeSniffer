@@ -1,4 +1,4 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.utils
 
 import java.io.{File, FileNotFoundException}
 

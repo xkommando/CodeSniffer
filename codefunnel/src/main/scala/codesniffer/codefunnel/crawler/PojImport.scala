@@ -1,7 +1,8 @@
-package codesniffer.codefunnel
+package codesniffer.codefunnel.crawler
 
 import java.io.File
 
+import codesniffer.codefunnel.utils.{DBSupport, DirTravel}
 import gplume.scala.jdbc.SQLAux._
 import net.liftweb.json.{JsonAST, Printer}
 import org.postgresql.util.PGobject

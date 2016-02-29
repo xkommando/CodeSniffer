@@ -1,22 +1,18 @@
+package test.codesniffer.codefunnel
+
 import java.io.{File, FileInputStream}
 
 import codesniffer.api.body.MethodDeclaration
 import codesniffer.api.visitor.VoidVisitorAdapter
-import codesniffer.codefunnel.{_STokenSource, STokenSource, SToken}
+import codesniffer.codefunnel.utils.{SToken, _STokenSource}
 import codesniffer.deckard.Location
-import codesniffer.deckard.vgen._
+import codesniffer.deckard.vgen.{ClassVisitor, Context, DirScanConfig, FileVisitor}
 import codesniffer.java8.{CompilationUnitListener, Java8Lexer, Java8Parser}
 import org.antlr.v4.runtime
-import org.antlr.v4.runtime.{ListTokenSource, Token, CommonTokenStream}
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.atn.PredictionMode
 import org.antlr.v4.runtime.tree.ParseTreeWalker
-
 import scala.collection.convert.wrapAsScala._
-import scala.collection.convert.wrapAsJava._
-
-
-
-
 /**
   * Created by Bowen Cai on 2/19/2016.
   */
