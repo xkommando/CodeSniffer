@@ -2,6 +2,7 @@ package codesniffer.deckard.search
 
 import java.io.File
 import java.util
+import java.util.concurrent.atomic.AtomicInteger
 
 import codesniffer.core._
 import codesniffer.deckard.{ArrayVec, Indexer, MemWriter}
@@ -93,13 +94,14 @@ object MainScript {
 
     val threshold = config.distThreshold
 
-    var right = vecCount
+    var right = new AtomicInteger(vecCount)
     val dprocCount = procCount.toDouble
     val tasks = for (i <- 1 to procCount) yield future[SortedList] {
       val sortedList = new SortedList()
       // assign task to each worker with average workload
       val left = vecCount - (math.sqrt(i / dprocCount) * vecCount).toInt
-      for (j <- left until right) {
+      val _r = right.get()
+      for (j <- left until _r) {
         for (k <- (i + 1) until vecCount) {
           val a = vecCollector(j).asInstanceOf[ArrayVec[String]]
           val ac = a.count
@@ -119,7 +121,7 @@ object MainScript {
         while (sortedList.size() > partResultSize) sortedList.pollLastEntry()
       }
       println(s"vectors from $left to $right searched")
-      right = left
+      right.set(left)
       sortedList
     }
     //  val results = Await.result(Future.sequence(tasks), 10.minutes)

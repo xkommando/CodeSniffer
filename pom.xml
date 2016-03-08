@@ -96,6 +96,28 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>${mvn-scala-plugin}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceDir>src/main/scala</sourceDir>
+                    <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
+                    <addArgs>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </addArgs>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

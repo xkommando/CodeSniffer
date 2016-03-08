@@ -6,7 +6,7 @@ package codesniffer.codefunnel
   */
 object Driver {
 
-  def main(args: Array[String]) {
-
+  def main(args: Array[String]): Unit = {
+    println("Done")
   }
 }

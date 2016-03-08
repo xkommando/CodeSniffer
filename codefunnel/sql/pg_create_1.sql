@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS cclone_bench_bellon;
 DROP TABLE IF EXISTS cclone_bench_krutz_le;
 
 DROP TABLE IF EXISTS "call_relation";
-DROP TABLE IF EXISTS "procedure";
+DROP TABLE IF EXISTS "procedure" CASCADE ;
 DROP TABLE IF EXISTS "r_poj_lang";
 DROP TABLE IF EXISTS "r_poj_tag";
 DROP TABLE IF EXISTS "poj_tag";
@@ -27,7 +27,7 @@ DROP TYPE IF EXISTS lex_token CASCADE;
 DROP TABLE IF EXISTS license;
 CREATE TABLE "license" (
   id             SMALLINT     NOT NULL  PRIMARY KEY,
-  "name"         VARCHAR(128) NOT NULL,
+  "name"         VARCHAR(512) NOT NULL,
   "version"      SMALLINT     NOT NULL,
   "release_date" DATE         NOT NULL DEFAULT now(),
   "url"          TEXT
@@ -38,11 +38,11 @@ CREATE INDEX idx_license_name ON "license" ("name");
 DROP TABLE IF EXISTS language_src;
 CREATE TABLE language_src (
   id            SMALLINT     NOT NULL  PRIMARY KEY,
-  spec          VARCHAR(128),
-  "name"        VARCHAR(128) NOT NULL,
+  spec          VARCHAR(256),
+  "name"        VARCHAR(256) NOT NULL,
   "version"     TEXT         NOT NULL,
   "release_date" DATE        NOT NULL,
-  "encoding"    VARCHAR(32),
+  "encoding"    VARCHAR(64),
   license_id    SMALLINT     REFERENCES "license" (id) ON DELETE RESTRICT,
   developers    TEXT [],
   "description" TEXT,
@@ -56,12 +56,12 @@ COMMENT ON COLUMN language_src."encoding" IS 'source code encoding';
 DROP TABLE IF EXISTS "project";
 CREATE TABLE "project" (
   id               SERIAL       NOT NULL  PRIMARY KEY,
-  "name"           VARCHAR(128) NOT NULL,
-  "branch"         VARCHAR(64),
+  "name"           VARCHAR(512) NOT NULL,
+  "branch"         VARCHAR(256),
   "version"        TEXT         NOT NULL,
-  build_sys        VARCHAR(128),
-  frontend         VARCHAR(128),
-  "target"         VARCHAR(128),
+  build_sys        VARCHAR(256),
+  frontend         VARCHAR(256),
+  "target"         VARCHAR(256),
   "timestamp"      TIMESTAMP    NOT NULL DEFAULT now(),
   license_id       SMALLINT     NOT NULL REFERENCES "license" (id)  ON DELETE RESTRICT ,
 
@@ -79,7 +79,7 @@ CREATE INDEX idx_poj_name ON "project" ("name");
 COMMENT ON COLUMN "project".build_sys IS 'how the project is build, e.g. CMAKE, ANT, Gradle';
 COMMENT ON COLUMN "project".frontend IS 'frontend(lexer, syntax analyzer) used in generating data of table "procedure" ';
 COMMENT ON COLUMN "project"."target" IS 'target running platfrom, e.g, WIN32, Python 3, .Net';
-COMMENT ON COLUMN "project"."timestamp" IS 'time when this project is loaded to this DB, not timestamp of the project itself';
+COMMENT ON COLUMN "project"."timestamp" IS 'time when this project is loaded to this DB, not birth time or anything of the project itself';
 COMMENT ON COLUMN "project"."directory" IS 'json representation of the file system perspective of this project';
 COMMENT ON COLUMN "project"."class_hierachy" IS 'json representation of the object relation of this project';
 
@@ -110,14 +110,32 @@ CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
 -- to see what exactly the t0oken type is, refer the lexer's vocabulary
 -- e.g., for antlr, Java8Lexer.getVocabulary.getSymbolicName(int_type) -> sting
 
-DROP TABLE IF EXISTS "procedure";
+---------------------------------------------------------------------------------------------------
+--            dynamic                                                                            --
+---------------------------------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS "src_file";
+CREATE TABLE "src_file" (
+  id        SERIAL        NOT NULL    PRIMARY KEY,
+  "name"    VARCHAR(1024) NOT NULL,
+  "dir"    VARCHAR(2048) NOT NULL,
+  poj_id    INT           NOT NULL    REFERENCES "project" (id) ON DELETE RESTRICT,
+  id_lang   SMALLINT      REFERENCES "language_src" (id) ON DELETE CASCADE,
+  "loc"     INT           NOT NULL,
+  "content" TEXT
+);
+
+CREATE INDEX idx_hash_proc_file ON "src_file" ("dir", "name");
+COMMENT ON COLUMN "src_file"."loc" IS 'Lines Of Code';
+
+DROP TABLE IF EXISTS "procedure" CASCADE ;
 CREATE TABLE "procedure" (
   id            SERIAL       NOT NULL  PRIMARY KEY,
-  "name"        VARCHAR(512) NOT NULL,
+  "name"        VARCHAR(1024) NOT NULL,
   "name_tokens" VARCHAR(1024),
-  poj_id        INT          REFERENCES "project" (id) ON DELETE RESTRICT,
+  poj_id        INT   NOT NULL      REFERENCES "project" (id) ON DELETE RESTRICT,
+  srcfile_id    INT   NOT NULL      REFERENCES "src_file" (id) ON DELETE RESTRICT,
 
-  "file"        TEXT         NOT NULL,
   "package"     TEXT,
   "class"       TEXT,
   lines         INT4RANGE    NOT NULL,
@@ -138,7 +156,6 @@ CREATE TABLE "procedure" (
 CREATE INDEX idx_fs_proc_name ON "procedure" USING GIN (to_tsvector('english', name_tokens));
 CREATE INDEX idx_fs_proc_comment ON "procedure" USING GIN (to_tsvector('english', src_comment));
 
-CREATE INDEX idx_hash_proc_file ON "procedure" USING HASH ("file");
 CREATE INDEX idx_hash_proc_pkg ON "procedure" USING HASH ("package");
 CREATE INDEX idx_hash_proc_class ON "procedure" USING HASH ("class");
 
@@ -158,7 +175,6 @@ COMMENT ON COLUMN "procedure"."ast" IS 'json representation of the abstract synt
 -- however in this code warehouse, only one kind of parser (parser with compatible interface) is used for each project,
 --  and the parser name is store at the "project"(frontend).
 --  i.e., for the same source code from a particular project, token seq and AST will not change no matter what parser is used.
-
 
 
 DROP TABLE IF EXISTS call_relation;

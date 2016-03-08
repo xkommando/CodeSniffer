@@ -121,3 +121,10 @@ DELETE FROM __bellon_temp USING __bellon_temp BT
 DELETE FROM __bellon_temp USING __bellon_temp BT 
   WHERE __bellon_temp.match_pc_id1 = BT.match_pc_id1 AND __bellon_temp.match_pc_id2 = BT.match_pc_id2 AND
     __bellon_temp.id < BT.id
+
+select cbb.type as cc_type, count(1) as cc_count, poj.name
+from cclone_bench_bellon as cbb
+inner join "procedure" as pd on pd.id = cbb.func1_id
+inner join "project" as poj on poj.id = pd.poj_id
+group by (cbb.type, poj.name)
+order by poj.name

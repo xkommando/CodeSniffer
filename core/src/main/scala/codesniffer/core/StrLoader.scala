@@ -44,9 +44,10 @@ class StrLoader(private[this] val paths: List[String]) extends InputStreamSuppor
   }
 
   def keys = map.keys
-  def get(k: String) = map(k)
-  def put(k: String, v: String) = map.put(k, v)
-  def remove(k:String) = map.remove(k)
+  def apply(k: String) = map(k)
+  def get(k: String):Option[String] = map.get(k)
+  def put(k: String, v: String) :Option[String] = map.put(k, v)
+  def remove(k:String):Option[String] = map.remove(k)
 
   override def stop(): Unit = {
     map.clear()
