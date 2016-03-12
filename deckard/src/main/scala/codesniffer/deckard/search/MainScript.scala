@@ -25,7 +25,7 @@ object MainScript {
 
   // to a directory, or a single source file
 //    val path = "D:\\__jvm\\spring-framework-master"
-  val path = "D:\\__jvm\\cache\\ehcache-2.7.5"
+  val path = "D:\\repos\\cache\\ehcache-2.7.5"
 //  val path = "D:\\__TEMP__\\src\\Src3.java"
   var resultSize = 16
 //    val path = "D:\\__jvm\\spring-framework-master\\spring-framework-master\\spring-jdbc"

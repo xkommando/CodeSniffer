@@ -37,16 +37,17 @@ class InsertBuffer(val pojId:Int, mapToFS: String => String) {
       flush()
   }
 
-  def flush(): Unit = try {
+  def flush(): Unit = if (buf.nonEmpty) try {
     import MethodImport4J._
-    db.newSession {session => {
-      val stmt = session.connection.createStatement()
+    import gplume.scala.jdbc.SQLAux.SQLInterpolation
+    import gplume.scala.jdbc.SQLOperation._
 
+    MethodImport4J.boot()
+    db.newSession {implicit session =>
       val fileMap = buf.map(_.loc.file).foldLeft(new mutable.HashMap[String, Int]()){(mp, file) =>
         mp.put(file, -1)
         mp
       }
-
       fileMap.keys.foreach{file=>
         val builder = new mutable.StringBuilder(512)
         val idx = {
@@ -54,59 +55,58 @@ class InsertBuffer(val pojId:Int, mapToFS: String => String) {
           val idx2 = file.lastIndexOf('\\')
           Math.max(0, Math.max(idx1, idx2))
         }
-        val qname = quoteTo(file.substring(idx + 1))
-        val qDir = quoteTo(file.substring(0, idx))
+        val qname = quote(file.substring(idx + 1))
+        val qDir = quote(file.substring(0, idx))
 
         val source = scala.io.Source.fromFile(mapToFS(file))
         val lines = try source.getLines().toArray finally source.close()
         val loc = lines.length
-        val qcontent = quoteTo(lines.mkString("\r\n"))
+        val qcontent = quote(lines.mkString("\r\n"))
         source.close()
-        val qrs = stmt.executeQuery(
-          s""" SELECT id FROM src_file WHERE poj_id = $pojId AND name = $qname AND dir = $qDir AND loc = $loc AND content = $qcontent""")
-//        val qrs = stmt.executeUpdate(
-//          s""" UPDATE src_file SET content = $qcontent WHERE poj_id = $pojId AND name = $qname AND dir = $qDir AND loc = $loc""")
 
-        if (qrs.next()) {
-          fileMap.update(file, qrs.getInt(1))
+        val opId = sql"""SELECT id FROM src_file WHERE poj_id = $pojId
+               AND "name" = $qname
+               AND dir = $qDir
+               AND loc = $loc
+               AND "content" = $qcontent""".first(colInt)
+        if (opId.isDefined) {
+          fileMap.update(file, opId.get)
         } else {
-          builder.append(
-            s""" INSERT INTO src_file(name, dir, poj_id, loc, content)VALUES(
-               $qname, $qDir, $pojId, $loc, $qcontent)""")
-          stmt.execute(builder.toString())
-          val irs = stmt.executeQuery("SELECT LASTVAL()")
-          val nid = if (irs.next()) irs.getInt(1) else throw new RuntimeException("cannot get inserted row id")
-          fileMap.update(file, nid)
-        }
+          sql"""INSERT INTO src_file("name", dir, poj_id, loc, "content")VALUES(
+               $qname, $qDir, $pojId, $loc, $qcontent)""".execute()
 
+          fileMap.update(file, sql"SELECT LASTVAL()".first(colInt).get)
+        }
       } // foreach file
 //      fileMap.keySet.foreach{f =>
 //        println(s"${f} ->  ${fileMap.get(f)}")
 //      }
+      val builder = new scala.StringBuilder(24000)
+      val stmt = session.connection.createStatement()
+
       buf.foreach { rd =>
         val fileId = fileMap(rd.loc.file)
-        // NOTE all comments will be filted here
-        val tks = rd.tokens.filter(_.getChannel == Token.DEFAULT_CHANNEL) // default (value == 0, usefull) tokens only, channel 1 is empty token, channel 2 is comment token
-        val builder = new StringBuilder(tks.length * 70 + 250).append(
+        // NOTE all comments will be filtered here
+        // default (value == 0, usefull) tokens only, channel 1 is empty token, channel 2 is comment token
+        val tks = rd.tokens.filter(_.getChannel == Token.DEFAULT_CHANNEL)
+        builder.append(
           s"""INSERT INTO \"procedure\"(\"name\", poj_id, srcfile_id, \"package\", \"class\", \"lines\",
               src_impl, return_t, token_count, token_seq)VALUES (
                 '${rd.name}', $pojId, $fileId, '${rd.loc.scope.parent.toString}', '${rd.loc.scope.asInstanceOf[ClassScope].name}',
-                INT4RANGE(${rd.loc.lineBegin}, ${rd.loc.lineEnd}), ${quoteTo(rd.funcSrc)} , ${quoteTo(rd.retType)}, ${tks.length}, ARRAY[
-             """)
-        val strB = tks.foldLeft(builder)((b: mutable.StringBuilder, tk: SToken) => {
+                INT4RANGE(${rd.loc.lineBegin}, ${rd.loc.lineEnd}), ${quote(rd.funcSrc)} , ${quote(rd.retType)}, ${tks.length}, ARRAY[""")
+        val _str = tks.foldLeft(builder){(b: mutable.StringBuilder, tk: SToken) =>
           ////          CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
           ////-- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
-          b.append(s""" (${tk.getType}, ${tk.getLine}, ${tk.getCharPositionInLine}, ${quoteTo(tk.getText)})::lex_token,""") ///! escape
+          b.append(s""" (${tk.getType}, ${tk.getLine}, ${tk.getCharPositionInLine}, ${quote(tk.getText)})::lex_token,""") ///! escape
           b
         }
-        )
-        strB.setCharAt(strB.length - 1, ']')
-        strB.append(')')
-        //          println(strB)
-        stmt.addBatch(strB.toString())
-      }
+        builder.setCharAt(_str.length - 1, ']')
+        builder.append(')')
+        //          println(builder)
+        stmt.addBatch(builder.toString())
+        builder.setLength(0)
+      } // foreach
       stmt.executeBatch()
-    } // db session
     } // db session
     MethodImport4J.LOG.debug("Flushing: " + buf.length)
     buf.clear()
@@ -123,10 +123,11 @@ object MethodImport4J extends DBSupport {
 
   def main(args: Array[String]) {
     super.boot()
-    importSRC(1, "D:\\repos\\eclipse-jdtcore")
-    importSRC(2, "D:\\repos\\eclipse-ant")
-    importSRC(3, "D:\\repos\\j2sdk1.4.0-javax-swing")
-    importSRC(4, "D:\\repos\\netbeans-javadoc")
+//    importSRC(1, "D:\\repos\\eclipse-jdtcore")
+//    importSRC(2, "D:\\repos\\eclipse-ant")
+//    importSRC(3, "D:\\repos\\j2sdk1.4.0-javax-swing")
+//    importSRC(4, "D:\\repos\\netbeans-javadoc")
+    importSRC(5, "D:\\repos\\__temp")
   }
 
 
@@ -149,11 +150,11 @@ object MethodImport4J extends DBSupport {
       fileCount += 1
       val stream = new FileInputStream(src)
       val antlrStream = new runtime.ANTLRInputStream(stream)
+
       tokenSource = new STokenSource(
         new Java8Lexer(antlrStream).getAllTokens
           .filter(_.getChannel != 1) // channel 0 default(and useful); 1 blank; 2 comment
           .zipWithIndex.map{case (t,i) =>{SToken(i, t.getType, t.getLine, t.getCharPositionInLine, t.getChannel, t.getStartIndex, t.getStopIndex, t.getText)}}.toArray)
-
       val cu = try {// Try { cannot handle not impl error
         val tokens = new CommonTokenStream(tokenSource)
         val parser = new Java8Parser(tokens)
@@ -167,19 +168,22 @@ object MethodImport4J extends DBSupport {
         case e:Throwable =>
           System.err.println(e.getClass.getSimpleName)
           null.asInstanceOf[CompilationUnit]
+      } finally {
+        stream.close()
       }
-      stream.close()
       if (cu != null) {
         try {
           scanner.context.currentLocation = scanner.context.currentLocation.copy(file = src.getPath.substring(rootDir.length + 1).replace("\\","/"))
           scanner.fileVisitor.visit(cu, context)
         } catch {
           case e: Throwable =>
-            LOG.error(s"Could not travel though unit ${src.getPath}, exception: ${e.getClass.getSimpleName}")
+            LOG.error(s"Could not travel though unit ${src.getPath}, " +
+              s"exception: ${e.getClass.getSimpleName} ${e.getMessage}  cause: ${e.getCause}")
 //            e.printStackTrace()
         }
       }
-    }
+    } // process file
+
     class TestV extends VoidVisitorAdapter[Context[Int]] {
       override def visit(meDec: MethodDeclaration, ctx: Context[Int]): Unit = {
 
@@ -195,9 +199,9 @@ object MethodImport4J extends DBSupport {
         }
 //        LOG.debug(s"find method ${meDec.getName}  from ${ctx.currentLocation.file}\r\n token count: ${methodTokens.length} code lines: ${(le - ls)}")
         if (le - ls > 3) {
-          buf.add(RowData(meDec.getName, meDec.getType.toString, meDec.toString,
-            ctx.currentLocation.copy(lineBegin = ls, lineEnd = le),
-            methodTokens))
+//          buf.add(RowData(meDec.getName, meDec.getType.toString, meDec.toString,
+//            ctx.currentLocation.copy(lineBegin = ls, lineEnd = le),
+//            methodTokens))
         }
 
 //        val com = meDec.getComment

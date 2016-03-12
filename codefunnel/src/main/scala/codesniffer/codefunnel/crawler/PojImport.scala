@@ -7,10 +7,37 @@ import gplume.scala.jdbc.SQLAux._
 import net.liftweb.json.{JsonAST, Printer}
 import org.postgresql.util.PGobject
 
+import scala.collection.mutable
+
 /**
   * Created by Bowen Cai on 2/24/2016.
   */
 object PojImport extends DBSupport {
+
+  var map: mutable.HashMap[Int, String] = null
+
+  def main(args: Array[String]) {
+    super.boot()
+    //    updateDir(1, "D:\\__TEMP__\\eclipse-jdtcore\\src")
+    checkDir(1)
+    //    val conn = datasource.getConnection
+    //
+    //    val stmt = conn.createStatement()
+    //    stmt.setQueryTimeout(999)
+    //    val rs = stmt.executeQuery("select data, arr from jtest where id = 10")
+    //    while (rs.next()) {
+    //      val pgo = rs.getObject(1).asInstanceOf[PGobject]
+    //      println(pgo.getClass.getCanonicalName)
+    //      println(pgo)
+    //      val a2 = rs.getObject(2).asInstanceOf[PgArray] //.getArray //.asInstanceOf[Array[PGobject]]
+    //      val arr = a2.getArray
+    //      println(arr)
+    //    }
+    //
+    //    rs.close()
+    //    stmt.close()
+    //    conn.close()
+  }
 
   def updateDir(pojId: Int, path:String): Unit = {
     super.boot()
@@ -44,29 +71,6 @@ object PojImport extends DBSupport {
       }
       println(json)
     }
-  }
-
-  def main(args: Array[String]) {
-    super.boot()
-//    updateDir(1, "D:\\__TEMP__\\eclipse-jdtcore\\src")
-    checkDir(1)
-//    val conn = datasource.getConnection
-//
-//    val stmt = conn.createStatement()
-//    stmt.setQueryTimeout(999)
-//    val rs = stmt.executeQuery("select data, arr from jtest where id = 10")
-//    while (rs.next()) {
-//      val pgo = rs.getObject(1).asInstanceOf[PGobject]
-//      println(pgo.getClass.getCanonicalName)
-//      println(pgo)
-//      val a2 = rs.getObject(2).asInstanceOf[PgArray] //.getArray //.asInstanceOf[Array[PGobject]]
-//      val arr = a2.getArray
-//      println(arr)
-//    }
-//
-//    rs.close()
-//    stmt.close()
-//    conn.close()
   }
 
 

@@ -14,7 +14,7 @@ class DBSupport {
   val classLoader = getClass.getClassLoader
 
   private var booted = false
-  def boot() {
+  def boot() = this.synchronized {
     if (!booted) {
       val _bootstrap = new ContextBooter
       _bootstrap.setClassLoader(classLoader)
@@ -25,7 +25,7 @@ class DBSupport {
     }
   }
 
-  def quoteTo(param: String): String = {
+  def quote(param: String): String = {
     val b = new scala.StringBuilder(param.length * 3 / 2)
     b.append(''')
 

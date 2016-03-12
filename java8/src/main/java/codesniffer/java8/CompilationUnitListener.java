@@ -23,6 +23,8 @@ import codesniffer.api.*;
 import codesniffer.java8.adapter.*;
 import org.antlr.v4.runtime.*;
 
+import java.util.Enumeration;
+
 /**
  *
  */

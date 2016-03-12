@@ -132,8 +132,8 @@ DROP TABLE IF EXISTS "procedure" CASCADE ;
 CREATE TABLE "procedure" (
   id            SERIAL       NOT NULL  PRIMARY KEY,
   "name"        VARCHAR(1024) NOT NULL,
-  "name_tokens" VARCHAR(1024),
-  poj_id        INT   NOT NULL      REFERENCES "project" (id) ON DELETE RESTRICT,
+--   "name_tokens" VARCHAR(1024),
+  poj_id        INT   NOT NULL      REFERENCES "project" (id) ON DELETE RESTRICT, -- redundant field to boost querying
   srcfile_id    INT   NOT NULL      REFERENCES "src_file" (id) ON DELETE RESTRICT,
 
   "package"     TEXT,
@@ -153,7 +153,7 @@ CREATE TABLE "procedure" (
 );
 
 -- full-text search
-CREATE INDEX idx_fs_proc_name ON "procedure" USING GIN (to_tsvector('english', name_tokens));
+-- CREATE INDEX idx_fs_proc_name ON "procedure" USING GIN (to_tsvector('english', name_tokens));
 CREATE INDEX idx_fs_proc_comment ON "procedure" USING GIN (to_tsvector('english', src_comment));
 
 CREATE INDEX idx_hash_proc_pkg ON "procedure" USING HASH ("package");

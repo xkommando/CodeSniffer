@@ -49,7 +49,7 @@ object BellonImport4J extends DBSupport {
     step2_match_update_par(4)
   }
 
-  var tableLock = new Semaphore(1)
+  var tableLock_ = new Semaphore(1)
 
   def step1_load(poj_id: Int, path: String): Unit = {
     LOG.info("Step 1, parse data from .CPF file and import structured data to PG")
@@ -87,7 +87,7 @@ object BellonImport4J extends DBSupport {
         LOG.warn("Failed on " + line)
     }
     LOG.info(s"${bellon.size} raw Bellon data fully parsed!")
-    tableLock.acquire()
+    tableLock_.acquire()
     db.newSession { implicit session =>
       sql"DROP TABLE IF EXISTS __bellon_temp".execute()
       sql"""CREATE TABLE __bellon_temp(id SERIAL PRIMARY KEY , "type" SMALLINT,
@@ -222,7 +222,7 @@ from (select PD1.id as proc_id,
       sql"DROP TABLE IF EXISTS __bellon_temp CASCADE".execute()
       LOG.info("temp table cleaned")
     }
-    tableLock.release()
+    tableLock_.release()
   }
 }
 
