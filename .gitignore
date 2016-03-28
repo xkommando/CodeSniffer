@@ -32,7 +32,7 @@ hs_err_pid*
 *.swp
 *~.nib
 *.timestamp
-*.iml
+# *.iml
 
 ## File-based project format:
 *.ipr

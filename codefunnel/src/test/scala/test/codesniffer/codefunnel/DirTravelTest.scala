@@ -1,15 +1,32 @@
 package test.codesniffer.codefunnel
 
-import java.io.File
+import java.io.{File, FileInputStream}
+import java.lang.reflect.Modifier
+
 import codesniffer.codefunnel.utils.DirTravel
-import net.liftweb.json.{JsonAST, Printer, DefaultFormats}
+import net.liftweb.json.{DefaultFormats, JsonAST, Printer}
+
 
 /**
   * Created by Bowen Cai on 2/24/2016.
   */
 object DirTravelTest {
 
-  def main (args: Array[String]) {
+  def main(args: Array[String]): Unit = {
+    t2()
+  }
+  def t2 (): Unit = {
+    val fs = new FileInputStream("D:\\tmp\\Example3.java")
+    val mr = classOf[FileInputStream].getDeclaredMethod("read0")
+    if (Modifier.isPrivate(mr.getModifiers))
+      mr.setAccessible(true)
+    val i32 = mr.invoke(fs)
+    println(i32)
+    fs.close()
+  }
+
+
+  def t1 (args: Array[String]) {
     //    val path = "C:\\workSpace\\idea\\CodeSniffer\\codefunnel\\src"
     val path = "codefunnel/src"
     val traveler = new DirTravel

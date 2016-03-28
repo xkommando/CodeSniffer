@@ -1,0 +1,8 @@
+<beans namespace="codesniffer::codefunnel::import">
+
+    <define scope="local">
+        <key1>value1</key1>
+        <my_injector>com.caibowen.gplume.context.bean.Injector</my_injector>
+    </define>
+
+</beans>

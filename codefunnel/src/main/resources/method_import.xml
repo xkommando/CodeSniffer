@@ -1,0 +1,8 @@
+<beans namespace="codesniffer::codefunnel::import">
+    <define scope="local">
+        <key2>value2</key2>
+        <i18n_cn>i18n</i18n_cn>
+        <i18n_cn2>zh_CN.properties</i18n_cn2>
+        <iso639_zh>zh_CN</iso639_zh>
+    </define>
+</beans>

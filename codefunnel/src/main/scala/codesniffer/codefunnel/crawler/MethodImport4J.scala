@@ -7,7 +7,7 @@ import codesniffer.api.expr.ThisExpr
 import codesniffer.api.stmt.EmptyStmt
 import codesniffer.api.visitor.VoidVisitorAdapter
 import codesniffer.api.{CompilationUnit, Node}
-import codesniffer.codefunnel.utils.{DBSupport, SToken, STokenSource}
+import codesniffer.codefunnel.utils.{DBUtils, SToken, STokenSource}
 import codesniffer.deckard.vgen.{Context, DirScanConfig, SrcScanner}
 import codesniffer.deckard.{ClassScope, Location}
 import codesniffer.java8.{CompilationUnitListener, Java8Lexer, Java8Parser}
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.convert.wrapAsScala._
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, StringBuilder}
+import scala.collection.mutable.ArrayBuffer
 
 case class RowData(name:String, retType:String, funcSrc: String, loc:Location, tokens:Array[SToken])
 
@@ -27,102 +27,99 @@ case class RowData(name:String, retType:String, funcSrc: String, loc:Location, t
   * @param pojId
   * @param mapToFS map file string to a real path on the file system (a relative path to an absolute path)
   */
-class InsertBuffer(val pojId:Int, mapToFS: String => String) {
+class InsertionBuffer(val pojId:Int, mapToFS: String => String) {
+
+  import DBUtils._
 
   private val buf = new ArrayBuffer[RowData](256)
 
-  def add(rd: RowData) = {
+  def add(rd: RowData) = this.synchronized {
     buf += rd
     if (buf.length > 255)
       flush()
   }
 
-  def flush(): Unit = if (buf.nonEmpty) try {
-    import MethodImport4J._
-    import gplume.scala.jdbc.SQLAux.SQLInterpolation
-    import gplume.scala.jdbc.SQLOperation._
+  def flush(): Unit = this.synchronized {
+    if (buf.nonEmpty) try {
+      import gplume.scala.jdbc.SQLAux.SQLInterpolation
+      import gplume.scala.jdbc.SQLOperation._
 
-    MethodImport4J.boot()
-    db.newSession {implicit session =>
-      val fileMap = buf.map(_.loc.file).foldLeft(new mutable.HashMap[String, Int]()){(mp, file) =>
-        mp.put(file, -1)
-        mp
-      }
-      fileMap.keys.foreach{file=>
-        val builder = new mutable.StringBuilder(512)
-        val idx = {
-          val idx1 = file.lastIndexOf('/')
-          val idx2 = file.lastIndexOf('\\')
-          Math.max(0, Math.max(idx1, idx2))
+      DBUtils.db.newSession { implicit session =>
+        val fileMap = buf.map(_.loc.file).foldLeft(new mutable.HashMap[String, Int]()) { (mp, file) =>
+          mp.put(file, -1)
+          mp
         }
-        val qname = quote(file.substring(idx + 1))
-        val qDir = quote(file.substring(0, idx))
+        // step 1, collect file -> id-in-DB
+        fileMap.keys.foreach { file =>
+          val idx = {
+            val idx1 = file.lastIndexOf('/')
+            val idx2 = file.lastIndexOf('\\')
+            Math.max(0, Math.max(idx1, idx2))
+          }
+          val qname = quote(file.substring(idx + 1))
+          val qDir = quote(file.substring(0, idx))
 
-        val source = scala.io.Source.fromFile(mapToFS(file))
-        val lines = try source.getLines().toArray finally source.close()
-        val loc = lines.length
-        val qcontent = quote(lines.mkString("\r\n"))
-        source.close()
+          val source = scala.io.Source.fromFile(mapToFS(file))
+          val lines = try source.getLines().toArray finally source.close()
+          val loc = lines.length
+          val qcontent = quote(lines.mkString("\r\n"))
+          source.close()
 
-        val opId = sql"""SELECT id FROM src_file WHERE poj_id = $pojId
+          val opId =
+            sql"""SELECT id FROM src_file WHERE poj_id = $pojId
                AND "name" = $qname
                AND dir = $qDir
                AND loc = $loc
                AND "content" = $qcontent""".first(colInt)
-        if (opId.isDefined) {
-          fileMap.update(file, opId.get)
-        } else {
-          sql"""INSERT INTO src_file("name", dir, poj_id, loc, "content")VALUES(
+          if (opId.isDefined) {
+            fileMap.update(file, opId.get)
+          } else {
+            sql"""INSERT INTO src_file("name", dir, poj_id, loc, "content")VALUES(
                $qname, $qDir, $pojId, $loc, $qcontent)""".execute()
+            fileMap.update(file, sql"SELECT LASTVAL()".first(colInt).get)
+          }
+        } // foreach file
 
-          fileMap.update(file, sql"SELECT LASTVAL()".first(colInt).get)
-        }
-      } // foreach file
-//      fileMap.keySet.foreach{f =>
-//        println(s"${f} ->  ${fileMap.get(f)}")
-//      }
-      val builder = new scala.StringBuilder(24000)
-      val stmt = session.connection.createStatement()
+        val sqlBuilder = new scala.StringBuilder(24000)
+        val stmt = session.connection.createStatement()
 
-      buf.foreach { rd =>
-        val fileId = fileMap(rd.loc.file)
-        // NOTE all comments will be filtered here
-        // default (value == 0, usefull) tokens only, channel 1 is empty token, channel 2 is comment token
-        val tks = rd.tokens.filter(_.getChannel == Token.DEFAULT_CHANNEL)
-        builder.append(
-          s"""INSERT INTO \"procedure\"(\"name\", poj_id, srcfile_id, \"package\", \"class\", \"lines\",
+        buf.foreach { rd =>
+          val fileId = fileMap(rd.loc.file)
+          // NOTE all comments will be filtered here
+          // default (value == 0, usefull) tokens only, channel 1 is empty token, channel 2 is comment token
+          val tks = rd.tokens.filter(_.getChannel == Token.DEFAULT_CHANNEL)
+          sqlBuilder.append(
+            s"""INSERT INTO \"procedure\"(\"name\", poj_id, srcfile_id, \"package\", \"class\", \"lines\",
               src_impl, return_t, token_count, token_seq)VALUES (
                 '${rd.name}', $pojId, $fileId, '${rd.loc.scope.parent.toString}', '${rd.loc.scope.asInstanceOf[ClassScope].name}',
                 INT4RANGE(${rd.loc.lineBegin}, ${rd.loc.lineEnd}), ${quote(rd.funcSrc)} , ${quote(rd.retType)}, ${tks.length}, ARRAY[""")
-        val _str = tks.foldLeft(builder){(b: mutable.StringBuilder, tk: SToken) =>
-          ////          CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
-          ////-- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
-          b.append(s""" (${tk.getType}, ${tk.getLine}, ${tk.getCharPositionInLine}, ${quote(tk.getText)})::lex_token,""") ///! escape
-          b
-        }
-        builder.setCharAt(_str.length - 1, ']')
-        builder.append(')')
-        //          println(builder)
-        stmt.addBatch(builder.toString())
-        builder.setLength(0)
-      } // foreach
-      stmt.executeBatch()
-    } // db session
-    MethodImport4J.LOG.debug("Flushing: " + buf.length)
-    buf.clear()
-  } catch {
-    case e:Throwable => e.printStackTrace()
-  }
+          val _str = tks.foldLeft(sqlBuilder) { (b, tk) =>
+            ////          CREATE TYPE lex_token AS("type" INT, "line" INT, "column" INT, "text" TEXT);
+            ////-- insert into jtest(arr)values(ARRAY['(0, 15, 99, "public")'::lex_token, '(6, 154, 299, "class")'::lex_token])
+            b.append(s""" (${tk.getType}, ${tk.getLine}, ${tk.getCharPositionInLine}, ${quote(tk.getText)})::lex_token,""") ///! escape
+          }
+          sqlBuilder.setCharAt(_str.length - 1, ']')
+          sqlBuilder.append(')')
+          stmt.addBatch(sqlBuilder.toString())
+          sqlBuilder.setLength(0)
+        } // foreach
+        stmt.executeBatch()
+      } // db session
+      MethodImport4J.LOG.debug("Flushing: " + buf.length)
+      buf.clear()
+    } catch {
+      case e: Throwable => e.printStackTrace()
+    }
+  } // sync
 }
 /**
   * Created by Bowen Cai on 2/24/2016.
   */
-object MethodImport4J extends DBSupport {
+object MethodImport4J {
 
   val LOG = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]) {
-    super.boot()
 //    importSRC(1, "D:\\repos\\eclipse-jdtcore")
 //    importSRC(2, "D:\\repos\\eclipse-ant")
 //    importSRC(3, "D:\\repos\\j2sdk1.4.0-javax-swing")
@@ -145,7 +142,7 @@ object MethodImport4J extends DBSupport {
     var fileCount = 0
     var methodCount = 0
 //    file = src.getPath.substring(rootDir.length).replace("\\","/"))
-    val buf = new InsertBuffer(pojId, (relative:String)=> (rootDir  + "/" + relative).replace("\\", "/"))
+    val buf = new InsertionBuffer(pojId, (relative:String)=> (rootDir  + "/" + relative).replace("\\", "/"))
     scanner.processFile = (src)=>{
       fileCount += 1
       val stream = new FileInputStream(src)

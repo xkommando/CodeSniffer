@@ -43,7 +43,6 @@ class DirTravel {
       if (i >= 0)
         trimIdx = i + trimPath.length
     }
-    println(trimIdx)
     val jo = f match {
       case file if f.isFile =>
         JObject(List(JField("type", JString("File")), JField("path", JString(getPath(file))), JField("name", JString(file.getName))))

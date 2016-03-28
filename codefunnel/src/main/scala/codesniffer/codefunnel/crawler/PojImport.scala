@@ -1,46 +1,47 @@
 package codesniffer.codefunnel.crawler
 
 import java.io.File
+import javax.inject.Inject
 
-import codesniffer.codefunnel.utils.{DBSupport, DirTravel}
+import codesniffer.codefunnel.utils.{DBUtils, DirTravel}
+import gplume.scala.context.AppContext
 import gplume.scala.jdbc.SQLAux._
 import net.liftweb.json.{JsonAST, Printer}
 import org.postgresql.util.PGobject
 
 import scala.collection.mutable
+import scala.collection.convert.wrapAsScala._
 
 /**
   * Created by Bowen Cai on 2/24/2016.
   */
-object PojImport extends DBSupport {
+object PojImport {
 
-  var map: mutable.HashMap[Int, String] = null
+  @Inject
+  var map: Map[Int, String] = null
+  import DBUtils.db
 
   def main(args: Array[String]) {
-    super.boot()
+    var ld: ClassLoader = getClass.getClassLoader
+    while (ld != null) {
+      println(ld.getClass.getCanonicalName)
+      ld = ld.getParent
+    }
+  }
+  def drive() {
+
+    val cc = AppContext.beanAssembler.configCenter()
+    val es = cc.localEntries("poj_import.xml")
+
+    for (e <- asScalaSet(es)) {
+      println(e.getKey + "  " + e.getValue)
+    }
+    println(map)
     //    updateDir(1, "D:\\__TEMP__\\eclipse-jdtcore\\src")
-    checkDir(1)
-    //    val conn = datasource.getConnection
-    //
-    //    val stmt = conn.createStatement()
-    //    stmt.setQueryTimeout(999)
-    //    val rs = stmt.executeQuery("select data, arr from jtest where id = 10")
-    //    while (rs.next()) {
-    //      val pgo = rs.getObject(1).asInstanceOf[PGobject]
-    //      println(pgo.getClass.getCanonicalName)
-    //      println(pgo)
-    //      val a2 = rs.getObject(2).asInstanceOf[PgArray] //.getArray //.asInstanceOf[Array[PGobject]]
-    //      val arr = a2.getArray
-    //      println(arr)
-    //    }
-    //
-    //    rs.close()
-    //    stmt.close()
-    //    conn.close()
+//    checkDir(1)
   }
 
   def updateDir(pojId: Int, path:String): Unit = {
-    super.boot()
     val traveler = new DirTravel
     traveler.trimPath = "D:\\__TEMP__\\"
     traveler.acceptFolder = folder=> !Set("bin", "target", "output", "lib").contains(folder.getName)
@@ -62,7 +63,6 @@ object PojImport extends DBSupport {
   }
 
   def checkDir(pojId:Int): Unit = {
-    super.boot()
     db.newSession{implicit session =>
       val json = sql"SELECT directory FROM project WHERE id = $pojId".first{ rs=>
         rs.getObject(1)

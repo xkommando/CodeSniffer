@@ -25,7 +25,8 @@ object MainScript {
 
   // to a directory, or a single source file
 //    val path = "D:\\__jvm\\spring-framework-master"
-  val path = "D:\\repos\\cache\\ehcache-2.7.5"
+//  val path = "D:\\repos\\cache\\ehcache-2.7.5"
+  val path = "C:\\Users\\bowen\\Downloads\\tmp"
 //  val path = "D:\\__TEMP__\\src\\Src3.java"
   var resultSize = 16
 //    val path = "D:\\__jvm\\spring-framework-master\\spring-framework-master\\spring-jdbc"
@@ -59,8 +60,8 @@ object MainScript {
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
     val vecCollector = new MemWriter[String]
     val scanner = new SrcScanner(new Context(config, currentLocation = null, data = null, new Indexer[String], vecCollector))
-    val mv = new SkipLocksVecGen[String]
-    scanner.methodVisitor = mv;
+    val mv = new BasicVecGen[String]//SkipLocksVecGen[String]
+    scanner.methodVisitor = mv
     mv.classVisitor = scanner.classVisitor
     scanner.classVisitor.setMethodVisitor(mv)
     /** **************************************************************************
@@ -80,7 +81,7 @@ object MainScript {
 
     type SortedList = util.TreeMap[Double, (ArrayVec[_], ArrayVec[_])]
 
-    val procCount: Int = Runtime.getRuntime.availableProcessors()
+    val procCount: Int = 1//Runtime.getRuntime.availableProcessors()
 
     // forkjoin out performs threadpool
     //    import ExecutionContext.Implicits.global
@@ -92,9 +93,9 @@ object MainScript {
 
     val t1 = System.currentTimeMillis()
 
-    val threshold = config.distThreshold
+    val threshold = 9999//config.distThreshold
 
-    var right = new AtomicInteger(vecCount)
+    val right = new AtomicInteger(vecCount)
     val dprocCount = procCount.toDouble
     val tasks = for (i <- 1 to procCount) yield future[SortedList] {
       val sortedList = new SortedList()
@@ -107,7 +108,7 @@ object MainScript {
           val ac = a.count
           val b = vecCollector(k).asInstanceOf[ArrayVec[String]]
           val bc = b.count
-          if (ac > 20 && bc > 20 && math.abs(ac - bc) < 60) { // this could significantly reduce comparison
+//          if (ac > 20 && bc > 20 && math.abs(ac - bc) < 60) { // this could significantly reduce comparison
             val dist = a.distance(b)
 //            val dist = ArrayVec.math.EuclideanDist(b)
             if (dist < threshold)
@@ -115,7 +116,7 @@ object MainScript {
 //            val dist = a.math.CosineDist(b)
 //            if (dist < 0.01)
 //              sortedList.put(dist, (a, b))
-          }
+//          }
         }
         // chop off redundant data
         while (sortedList.size() > partResultSize) sortedList.pollLastEntry()

@@ -3,7 +3,8 @@ package codesniffer.codefunnel.crawler
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantLock
 
-import codesniffer.codefunnel.utils.DBSupport
+import codesniffer.codefunnel.utils.DBUtils
+import gplume.scala.context.AppContext
 import gplume.scala.jdbc.SQLAux._
 import gplume.scala.jdbc.SQLOperation._
 import org.slf4j.LoggerFactory
@@ -29,12 +30,12 @@ parallel
 /**
   * Created by Bowen Cai on 2/26/2016.
   */
-object BellonImport4J extends DBSupport {
+object BellonImport4J {
 
   val LOG = LoggerFactory.getLogger(getClass)
+  import DBUtils.db
 
   def main(args: Array[String]): Unit = {
-    super.boot()
     //     do not call step3 when using  parallel step2
     step1_load(1, "D:\\repos\\eclipse-jdtcore.cpf")
         step2_match_update_par(1)
@@ -51,6 +52,7 @@ object BellonImport4J extends DBSupport {
 
   var tableLock_ = new Semaphore(1)
 
+  // load, parse and store bellon data in DB
   def step1_load(poj_id: Int, path: String): Unit = {
     LOG.info("Step 1, parse data from .CPF file and import structured data to PG")
     val t1 = System.currentTimeMillis()
@@ -117,7 +119,7 @@ from (select PD1.id as proc_id,
     */
   val distance_threshold = 12
   val amplify_ratio = 3
-
+  // step 2, match function and store to db
   def step2_match_update_par(poj_id: Int): Unit = {
     val t1 = System.currentTimeMillis()
     val threadNum: Int = Runtime.getRuntime.availableProcessors()
@@ -191,6 +193,7 @@ from (select PD1.id as proc_id,
       case Success(results) =>
 
         jexe.shutdown()
+        // filter out unmatched
         db.newSession { implicit session =>
           val countCC = sql"SELECT COUNT(1) FROM __bellon_temp".first(colInt).get
           LOG.info(s"$countCC code clone matched, now filter out unstructured data")
@@ -212,7 +215,7 @@ from (select PD1.id as proc_id,
     }
   }
 
-
+//  store the match into db
   def step3_import_clean(): Unit = {
     db.newSession { implicit session =>
       //      sql"TRUNCATE TABLE cclone_bench_bellon CASCADE ".execute()
