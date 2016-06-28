@@ -1,4 +1,4 @@
-package codesniffer.codefunnel;
+package test.codesniffer.codefunnel;
 
 public class bug {
 //    static Point currentPos = new Point(1, 2);

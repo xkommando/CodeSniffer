@@ -13,18 +13,37 @@ import net.liftweb.json.{DefaultFormats, JsonAST, Printer}
 object DirTravelTest {
 
   def main(args: Array[String]): Unit = {
+    val sm = new SecurityManager
+    System.setSecurityManager(sm)
     t2()
+//    t3()
   }
   def t2 (): Unit = {
+//    var cl = getClass.getClassLoader
+//    while (cl != null) {
+//      println(cl)
+//      cl = cl.getParent
+//    }
     val fs = new FileInputStream("D:\\tmp\\Example3.java")
     val mr = classOf[FileInputStream].getDeclaredMethod("read0")
     if (Modifier.isPrivate(mr.getModifiers))
       mr.setAccessible(true)
-    val i32 = mr.invoke(fs)
+    var i32 = mr.invoke(fs)
+    println(i32)
+    i32 = mr.invoke(fs)
     println(i32)
     fs.close()
   }
 
+  def t3(): Unit = {
+    val fs = new FileInputStream("D:\\tmp\\Example3.java")
+    val mr = classOf[FileInputStream].getDeclaredMethod("read0")
+//    if (Modifier.isPrivate(mr.getModifiers))
+//      mr.setAccessible(true)
+    val i32 = mr.invoke(fs)
+    println(i32)
+    fs.close()
+  }
 
   def t1 (args: Array[String]) {
     //    val path = "C:\\workSpace\\idea\\CodeSniffer\\codefunnel\\src"

@@ -1,8 +1,15 @@
 <beans namespace="codesniffer::codefunnel::import">
 
     <define scope="local">
-        <key1>value1</key1>
-        <my_injector>com.caibowen.gplume.context.bean.Injector</my_injector>
+        <entry key="D:\dev\src_repo\bellonbench\eclipse-jdtcore.tar\src" type="int">1</entry>
+        <entry key="D:\dev\src_repo\bellonbench\eclipse-ant.tar\src" type="int">2</entry>
+        <entry key="D:\dev\src_repo\bellonbench\j2sdk1.4.0-javax-swing.tar\src" type="int">3</entry>
+        <entry key="D:\dev\src_repo\bellonbench\netbeans-javadoc.tar\src" type="int">4</entry>
+        <entry key="D:\dev\src_repo\spring-framework-master" type="int">5</entry>
     </define>
+
+    <bean id="pojImport" class="codesniffer.codefunnel.crawler.PojImport" aftercall="drive">
+        <prop name="ds" ref="dataSource" />
+    </bean>
 
 </beans>

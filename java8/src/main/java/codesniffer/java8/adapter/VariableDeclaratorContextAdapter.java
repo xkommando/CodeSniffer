@@ -26,7 +26,7 @@ public class VariableDeclaratorContextAdapter implements Adapter<VariableDeclara
     public VariableDeclarator adapt(Java8Parser.VariableDeclaratorContext context, AdapterParameters adapterParameters) {
 
         VariableDeclarator variableDeclarator = new VariableDeclarator();
-        AdapterUtil.setComments(variableDeclarator, context, adapterParameters);
+//        AdapterUtil.setComments(variableDeclarator, context, adapterParameters);
         AdapterUtil.setPosition(variableDeclarator, context);
 
         VariableDeclaratorId variableDeclaratorId = new VariableDeclaratorId();

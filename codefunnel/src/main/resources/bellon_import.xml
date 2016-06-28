@@ -1,8 +1,13 @@
 <beans namespace="codesniffer::codefunnel::import">
+
     <define scope="local">
-        <key1>value1</key1>
-        <i18n_cn2>zh_CN.properties</i18n_cn2>
-        <iso639_zh>zh_CN</iso639_zh>
-        <my_injector>com.caibowen.gplume.context.bean.Injector</my_injector>
+        <entry key="D:\dev\src_repo\bellonbench\eclipse-jdtcore.cpf" type="int">1</entry>
+        <entry key="D:\dev\src_repo\bellonbench\eclipse-ant.cpf" type="int">2</entry>
+        <entry key="D:\dev\src_repo\bellonbench\j2sdk1.4.0-javax-swing.cpf" type="int">3</entry>
+        <entry key="D:\dev\src_repo\bellonbench\netbeans-javadoc.cpf" type="int">4</entry>
     </define>
+
+    <bean id="bellonImport" class="codesniffer.codefunnel.crawler.BellonImport4J" aftercall="drive">
+        <prop name="ds" ref="dataSource" />
+    </bean>
 </beans>

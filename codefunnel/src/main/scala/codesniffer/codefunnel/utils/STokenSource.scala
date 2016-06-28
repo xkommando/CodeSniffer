@@ -1,6 +1,7 @@
 package codesniffer.codefunnel.utils
 
 import org.antlr.v4.runtime.{CharStream, Token, TokenFactory, TokenSource}
+import sun.reflect.Reflection
 
 /**
   * Created by Bowen Cai on 2/23/2016.
@@ -57,7 +58,10 @@ class STokenSource(val tokens: Array[SToken] ) extends TokenSource {
     t
   }
 
-  override def getTokenFactory: TokenFactory[_] = ???
+  override def getTokenFactory: TokenFactory[_] = {
+    Console.err.append("Unexpected call to STokenSource->getTokenFactory")
+    ???
+  }
 
   override def getCharPositionInLine: Int = {
 
@@ -80,7 +84,19 @@ class STokenSource(val tokens: Array[SToken] ) extends TokenSource {
   }
 
 
-  override def getInputStream: CharStream = ???
+  override def getInputStream: CharStream = {
+    val ck = Reflection.getCallerClass.getCanonicalName
+    Console.err.append(ck)
+    Console.err.flush()
+    Console.err.append("Unexpected call to STokenSource->getInputStream")
+    ???
+  }
 
-  override def setTokenFactory(factory: TokenFactory[_]): Unit = ???
+  override def setTokenFactory(factory: TokenFactory[_]): Unit = {
+    val ck = Reflection.getCallerClass.getCanonicalName
+    Console.err.append(ck)
+    Console.err.flush()
+    Console.err.append("Unexpected call to STokenSource->setTokenFactory")
+    ???
+  }
 }

@@ -332,8 +332,12 @@ public final class AdapterUtil {
         }
 
         Token startToken = parserRuleContext.getStart();
-        List<Token> commentTokens;
-        commentTokens = tokens.getHiddenTokensToLeft(startToken.getTokenIndex(), Java8Lexer.COMMENTS);
+        List<Token> commentTokens = null;
+        try {
+//            commentTokens = tokens.getHiddenTokensToLeft(startToken.getTokenIndex(), Java8Lexer.COMMENTS);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
         if (commentTokens != null && commentTokens.size() > 0) {
             Iterator<Token> iter =  commentTokens.iterator();

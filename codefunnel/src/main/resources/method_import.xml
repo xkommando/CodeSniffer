@@ -1,8 +1,15 @@
 <beans namespace="codesniffer::codefunnel::import">
+
     <define scope="local">
-        <key2>value2</key2>
-        <i18n_cn>i18n</i18n_cn>
-        <i18n_cn2>zh_CN.properties</i18n_cn2>
-        <iso639_zh>zh_CN</iso639_zh>
+        <!--<entry key="D:\dev\src_repo\bellonbench\eclipse-jdtcore.tar\src" type="int">1</entry>-->
+        <!--<entry key="D:\dev\src_repo\bellonbench\eclipse-ant.tar\src" type="int">2</entry>-->
+        <!--<entry key="D:\dev\src_repo\bellonbench\j2sdk1.4.0-javax-swing.tar\src" type="int">3</entry>-->
+        <!--<entry key="D:\dev\src_repo\bellonbench\netbeans-javadoc.tar\src" type="int">4</entry>-->
+        <entry key="D:\dev\src_repo\spring-framework-master" type="int">5</entry>
     </define>
+
+    <bean id="methodImport" class="codesniffer.codefunnel.crawler.MethodImport4J" aftercall="drive">
+        <prop name="ds" ref="dataSource" />
+    </bean>
+
 </beans>

@@ -27,6 +27,4 @@ object DBUtils {
     b.append(''').toString()
   }
 
-  lazy val datasource :DataSource = AppContext.beanAssembler.getBean("dataSource")
-  lazy val db = new DB(datasource)
 }

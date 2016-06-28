@@ -5,7 +5,7 @@ package codesniffer.deckard
  */
 object MathDef {
 
-  def ln = StrictMath.log(_)
+  def ln = StrictMath.log _
 
   val log2baseE = StrictMath.log(2.0)
   val log3baseE = StrictMath.log(3.0)

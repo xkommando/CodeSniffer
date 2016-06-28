@@ -19,6 +19,7 @@
  */
 package codesniffer.java8.adapter;
 
+import codesniffer.api.body.VariableDeclaratorId;
 import codesniffer.api.expr.*;
 import codesniffer.java8.*;
 import scala.*;
@@ -49,7 +50,7 @@ public class ResourceContextAdapter implements Adapter<VariableDeclarationExpr, 
 
 //        resource.setExpression(Adapters.getExpressionContextAdapter().adapt(context.expression(), adapterParameters));
 
-        throw new NotImplementedError();
-//        return resource;
+//        throw new NotImplementedError();
+        return resource;
     }
 }

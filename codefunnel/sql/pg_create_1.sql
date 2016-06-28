@@ -132,7 +132,7 @@ DROP TABLE IF EXISTS "procedure" CASCADE ;
 CREATE TABLE "procedure" (
   id            SERIAL       NOT NULL  PRIMARY KEY,
   "name"        VARCHAR(1024) NOT NULL,
---   "name_tokens" VARCHAR(1024),
+  "name_tokens" VARCHAR(1024),
   poj_id        INT   NOT NULL      REFERENCES "project" (id) ON DELETE RESTRICT, -- redundant field to boost querying
   srcfile_id    INT   NOT NULL      REFERENCES "src_file" (id) ON DELETE RESTRICT,
 

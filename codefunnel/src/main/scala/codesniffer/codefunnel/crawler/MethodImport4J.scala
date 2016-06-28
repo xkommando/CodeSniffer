@@ -1,16 +1,20 @@
 package codesniffer.codefunnel.crawler
 
 import java.io.{File, FileInputStream}
+import javax.inject.Inject
+import javax.sql.DataSource
 
 import codesniffer.api.body.MethodDeclaration
 import codesniffer.api.expr.ThisExpr
 import codesniffer.api.stmt.EmptyStmt
 import codesniffer.api.visitor.VoidVisitorAdapter
 import codesniffer.api.{CompilationUnit, Node}
-import codesniffer.codefunnel.utils.{DBUtils, SToken, STokenSource}
+import codesniffer.codefunnel.utils._
 import codesniffer.deckard.vgen.{Context, DirScanConfig, SrcScanner}
 import codesniffer.deckard.{ClassScope, Location}
 import codesniffer.java8.{CompilationUnitListener, Java8Lexer, Java8Parser}
+import gplume.scala.context.AppContext
+import gplume.scala.jdbc.DB
 import org.antlr.v4.runtime
 import org.antlr.v4.runtime.atn.PredictionMode
 import org.antlr.v4.runtime.tree.ParseTreeWalker
@@ -30,6 +34,8 @@ case class RowData(name:String, retType:String, funcSrc: String, loc:Location, t
 class InsertionBuffer(val pojId:Int, mapToFS: String => String) {
 
   import DBUtils._
+  val ds :DataSource = AppContext.beanAssembler.getBean("dataSource")
+  val db = new DB(ds)
 
   private val buf = new ArrayBuffer[RowData](256)
 
@@ -44,7 +50,7 @@ class InsertionBuffer(val pojId:Int, mapToFS: String => String) {
       import gplume.scala.jdbc.SQLAux.SQLInterpolation
       import gplume.scala.jdbc.SQLOperation._
 
-      DBUtils.db.newSession { implicit session =>
+      db.newSession { implicit session =>
         val fileMap = buf.map(_.loc.file).foldLeft(new mutable.HashMap[String, Int]()) { (mp, file) =>
           mp.put(file, -1)
           mp
@@ -56,15 +62,14 @@ class InsertionBuffer(val pojId:Int, mapToFS: String => String) {
             val idx2 = file.lastIndexOf('\\')
             Math.max(0, Math.max(idx1, idx2))
           }
-          val qname = quote(file.substring(idx + 1))
-          val qDir = quote(file.substring(0, idx))
+          val qname = file.substring(idx + 1) // no need for quoting if using sql"", which will call prepStmt setString
+          val qDir = file.substring(0, idx)
 
           val source = scala.io.Source.fromFile(mapToFS(file))
           val lines = try source.getLines().toArray finally source.close()
           val loc = lines.length
-          val qcontent = quote(lines.mkString("\r\n"))
+          val qcontent = lines.mkString("\r\n")
           source.close()
-
           val opId =
             sql"""SELECT id FROM src_file WHERE poj_id = $pojId
                AND "name" = $qname
@@ -117,43 +122,60 @@ class InsertionBuffer(val pojId:Int, mapToFS: String => String) {
   */
 object MethodImport4J {
 
+//  def main(args: Array[String]) {
+//    println(Java8Parser.VOCABULARY.getSymbolicName(64)) ENUM
+//  }
   val LOG = LoggerFactory.getLogger(getClass)
 
-  def main(args: Array[String]) {
-//    importSRC(1, "D:\\repos\\eclipse-jdtcore")
-//    importSRC(2, "D:\\repos\\eclipse-ant")
-//    importSRC(3, "D:\\repos\\j2sdk1.4.0-javax-swing")
-//    importSRC(4, "D:\\repos\\netbeans-javadoc")
-    importSRC(5, "D:\\repos\\__temp")
+  @Inject
+  val ds :DataSource = AppContext.beanAssembler.getBean("dataSource")
+  val db = new DB(ds)
+
+  def drive(): Unit = {
+    val cc = AppContext.beanAssembler.configCenter()
+    val es = cc.localEntries("method_import.xml")
+    //    new TreeMap[String, Int](es).foreach { case (k, v) }
+    //    println(k + "  " + v)
+    //  }
+    for (e <- asScalaSet(es)) {
+      importSRC(e.getValue.asInstanceOf[Int], e.getKey)
+    }
   }
 
-
   def importSRC(pojId: Int, rootDir:String): Unit = {
-    LOG.info("importing " + rootDir)
+    LOG.info("importing " + rootDir + "  from poj " + pojId)
     val config = new DirScanConfig
     config.filterFile = (f: File) => {
       val name = f.getName
       name.equals("package-info.java") || name.endsWith("Tests.java")
     }
     config.filterNode = (node: Node) => node.isInstanceOf[EmptyStmt] || node.isInstanceOf[ThisExpr]
-    val context = new Context[Int](config, currentLocation = new Location(rootDir, 0, 0, null), data = null, indexer = null, vecWriter = null)
+    val context = new Context[Int](config, currentLocation = new Location(rootDir, 0, 0, null),
+      data = null, indexer = null, vecWriter = null)
+
     val scanner = new SrcScanner[Int](context)
-    var tokenSource: STokenSource = null
+    var tokenSource_ : STokenSource = null
     var fileCount = 0
+
     var methodCount = 0
 //    file = src.getPath.substring(rootDir.length).replace("\\","/"))
     val buf = new InsertionBuffer(pojId, (relative:String)=> (rootDir  + "/" + relative).replace("\\", "/"))
     scanner.processFile = (src)=>{
       fileCount += 1
-      val stream = new FileInputStream(src)
-      val antlrStream = new runtime.ANTLRInputStream(stream)
+      val stream1 = new FileInputStream(src)
+      tokenSource_ = new STokenSource(
+        new Java8Lexer(new runtime.ANTLRInputStream(stream1)).getAllTokens
+          .filter(_.getChannel == Token.DEFAULT_CHANNEL) // channel 0 default(and useful); 1 blank; 2 comment
+          .zipWithIndex.map{case (t,i) =>{SToken(i, t.getType, t.getLine, t.getCharPositionInLine, t.getChannel,
+                                          t.getStartIndex, t.getStopIndex,
+                                          t.getText)}
+        }.toArray)
+      stream1.close()
 
-      tokenSource = new STokenSource(
-        new Java8Lexer(antlrStream).getAllTokens
-          .filter(_.getChannel != 1) // channel 0 default(and useful); 1 blank; 2 comment
-          .zipWithIndex.map{case (t,i) =>{SToken(i, t.getType, t.getLine, t.getCharPositionInLine, t.getChannel, t.getStartIndex, t.getStopIndex, t.getText)}}.toArray)
+      val stream2 = new FileInputStream(src)
       val cu = try {// Try { cannot handle not impl error
-        val tokens = new CommonTokenStream(tokenSource)
+//        val tokens = new CommonTokenStream(tokenSource_)
+        val tokens = new CommonTokenStream(new Java8Lexer(new runtime.ANTLRInputStream(stream2)))
         val parser = new Java8Parser(tokens)
         parser.getInterpreter.setPredictionMode(PredictionMode.SLL)
         val tree = parser.compilationUnit
@@ -163,16 +185,19 @@ object MethodImport4J {
         listener.getCompilationUnit
       } catch {
         case e:Throwable =>
-          System.err.println(e.getClass.getSimpleName)
+          e.printStackTrace()
           null.asInstanceOf[CompilationUnit]
       } finally {
-        stream.close()
+        stream2.close()
       }
+
       if (cu != null) {
         try {
           scanner.context.currentLocation = scanner.context.currentLocation.copy(file = src.getPath.substring(rootDir.length + 1).replace("\\","/"))
           scanner.fileVisitor.visit(cu, context)
         } catch {
+          case unim: NotImplementedError =>
+            unim.printStackTrace()
           case e: Throwable =>
             LOG.error(s"Could not travel though unit ${src.getPath}, " +
               s"exception: ${e.getClass.getSimpleName} ${e.getMessage}  cause: ${e.getCause}")
@@ -189,7 +214,7 @@ object MethodImport4J {
         val cs = meDec.getBeginColumn
         val le = meDec.getEndLine
         val ce = meDec.getEndColumn
-        val methodTokens = tokenSource.tokens.filter { t =>
+        val methodTokens = tokenSource_.tokens.filter { t =>
           val l = t.getLine
           val c = t.getCharPositionInLine
           (t.getChannel == Token.DEFAULT_CHANNEL) && (l > ls || l == ls && c >= cs) && (l < le || l == le && c <= ce)

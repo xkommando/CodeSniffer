@@ -160,7 +160,7 @@ case class SlicerVecGen[F](vecGen: BasicVecGen[F], counter: SubTreeCounter[F]) e
 
   @inline
   protected def genVec[E <: Node](nodes: mutable.Buffer[E], ctx: Context[F])(implicit method: MethodDeclaration): Unit = {
-    if (nodes.length > 0) {
+    if (nodes.nonEmpty) {
       val prev = ctx.currentLocation
       ctx.currentLocation = ctx.currentLocation.copy(lineBegin = nodes.head.getBeginLine, lineEnd = nodes.last.getEndLine)
       val v = vecGen.before(method, ctx)

@@ -12,9 +12,17 @@ import org.postgresql.util.PGobject
 object PGJsonTest {
 
   def main(args: Array[String]): Unit = {
-    Class.forName("org.postgresql.Driver")
-
-    t2()
+//    Class.forName("org.postgresql.Driver")
+    var arr = Array("78", "erset", "123", null, "azss", "azssw")
+    val naar = arr.collect{case str:String if str != null && str.length > 4 =>
+      str
+    }
+    println(arr = naar)
+//    List("sd")
+//    t2()
+    val a = "44"
+    var b: String = null
+    println((b = a).getClass.getCanonicalName)
   }
 
   def t2(): Unit = {

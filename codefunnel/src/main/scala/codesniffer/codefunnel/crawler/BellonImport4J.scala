@@ -2,9 +2,11 @@ package codesniffer.codefunnel.crawler
 
 import java.util.concurrent.Semaphore
 import java.util.concurrent.locks.ReentrantLock
+import javax.sql.DataSource
 
-import codesniffer.codefunnel.utils.DBUtils
+import scala.collection.convert.wrapAsScala._
 import gplume.scala.context.AppContext
+import gplume.scala.jdbc.DB
 import gplume.scala.jdbc.SQLAux._
 import gplume.scala.jdbc.SQLOperation._
 import org.slf4j.LoggerFactory
@@ -15,7 +17,6 @@ import scala.io.Source
 import scala.util.{Failure, Success}
 
 /*
-
 step 1 finished, time elapsed: 5263 ms
 no par Step 2 Finished, time elapsed: 342148 ms
 ---------------------------
@@ -33,22 +34,39 @@ parallel
 object BellonImport4J {
 
   val LOG = LoggerFactory.getLogger(getClass)
-  import DBUtils.db
 
-  def main(args: Array[String]): Unit = {
-    //     do not call step3 when using  parallel step2
-    step1_load(1, "D:\\repos\\eclipse-jdtcore.cpf")
-        step2_match_update_par(1)
+  val ds :DataSource = AppContext.beanAssembler.getBean("dataSource")
+  val db = new DB(ds)
 
-    step1_load(2, "D:\\repos\\eclipse-ant.cpf")
-    step2_match_update_par(2)
-
-    step1_load(3, "D:\\repos\\j2sdk1.4.0-javax-swing.cpf")
-    step2_match_update_par(3)
-
-    step1_load(4, "D:\\repos\\netbeans-javadoc.cpf")
-    step2_match_update_par(4)
+  def drive(): Unit = {
+    val cc = AppContext.beanAssembler.configCenter()
+    val es = cc.localEntries("bellon_import.xml")
+    //    new TreeMap[String, Int](es).foreach { case (k, v) }
+    //    println(k + "  " + v)
+    //  }
+    for (e <- asScalaSet(es)) {
+      println(e.getValue.asInstanceOf[Int] + "   " +  e.getKey)
+      val pojId = e.getValue.asInstanceOf[Int]
+      val dir = e.getKey
+      step1_load(pojId, dir)
+      step2_match_update_par(pojId)
+    }
   }
+
+//  def main(args: Array[String]): Unit = {
+//    //     do not call step3 when using  parallel step2
+//    step1_load(1, "D:\\repos\\eclipse-jdtcore.cpf")
+//        step2_match_update_par(1)
+//
+//    step1_load(2, "D:\\repos\\eclipse-ant.cpf")
+//    step2_match_update_par(2)
+//
+//    step1_load(3, "D:\\repos\\j2sdk1.4.0-javax-swing.cpf")
+//    step2_match_update_par(3)
+//
+//    step1_load(4, "D:\\repos\\netbeans-javadoc.cpf")
+//    step2_match_update_par(4)
+//  }
 
   var tableLock_ = new Semaphore(1)
 
@@ -106,15 +124,15 @@ object BellonImport4J {
 
   /**
     * update __bellon_temp set match_pc_id2 = sub.proc_id, distance2 = sub.MT1
-from (select PD1.id as proc_id,
-	BF2.id as bf2_id,
-	(abs(lower(PD1.lines) - BF2.f1_line1) + abs(upper(PD1.lines) - BF2.f1_line2)) AS MT1
-    from "procedure" as PD1
-     join __bellon_temp as BF2 on position(PD1.file in BF2.pathf1) > 0
+    * from (select PD1.id as proc_id,
+    * BF2.id as bf2_id,
+    * (abs(lower(PD1.lines) - BF2.f1_line1) + abs(upper(PD1.lines) - BF2.f1_line2)) AS MT1
+    * from "procedure" as PD1
+    * join __bellon_temp as BF2 on position(PD1.file in BF2.pathf1) > 0
     * where pd1.poj_id = 2
     * ORDER BY MT1 ASC LIMIT 1
     * ) as sub  where id = sub.bf2_id
-
+    *
     * outer table is invisible for inner query, so we have to divide the operation and do a select-store-update
     */
   val distance_threshold = 12
@@ -185,14 +203,12 @@ from (select PD1.id as proc_id,
           }
         } // foreach
       } // db
-      LOG.debug("task finished")
       true
     } // tasks
 
+    LOG.debug(tasks.length + " tasks submitted")
     Future.sequence(tasks) onComplete {
       case Success(results) =>
-
-        jexe.shutdown()
         // filter out unmatched
         db.newSession { implicit session =>
           val countCC = sql"SELECT COUNT(1) FROM __bellon_temp".first(colInt).get
@@ -208,7 +224,7 @@ from (select PD1.id as proc_id,
 
           val t2 = System.currentTimeMillis()
           LOG.info(s"Step 2 Finished, time elapsed: ${t2 - t1} ms")
-          step3_import_clean()
+          _step3_import_clean()
         }
       case Failure(t) =>
         println(s"Search failed, error:$t")
@@ -216,7 +232,8 @@ from (select PD1.id as proc_id,
   }
 
 //  store the match into db
-  def step3_import_clean(): Unit = {
+  // called by step2_match_update_par, if use step2_match_update_par, do not call it directly
+  def _step3_import_clean(): Unit = {
     db.newSession { implicit session =>
       //      sql"TRUNCATE TABLE cclone_bench_bellon CASCADE ".execute()
       //      LOG.info("cclone_bench_bellon TRUNCATED ")

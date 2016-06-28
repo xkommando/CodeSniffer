@@ -21,6 +21,8 @@ package codesniffer.java8.adapter;
 
 import codesniffer.api.stmt.*;
 import codesniffer.java8.*;
+import org.antlr.v4.runtime.BufferedTokenStream;
+import org.antlr.v4.runtime.Token;
 
 public class BlockStatementContextAdapter implements Adapter<Statement, Java8Parser.BlockStatementContext> {
 
@@ -40,20 +42,20 @@ public class BlockStatementContextAdapter implements Adapter<Statement, Java8Par
             return Adapters.getStatementContextAdapter().adapt(context.statement(), adapterParameters);
         }
 
-//        System.err.println("\r\n======================================================");
-//        System.err.println(context.exception);
-//        System.err.println(context.getParent().getText());
-////        System.err.println(context.getText());// empty
-////        System.err.println(context.statement());// null
-//        System.err.println(adapterParameters.getTokens());
-//
+        System.err.println("\r\n======================================================");
+        System.err.println(context.exception);
+        System.err.println(context.getParent().getText());
+//        System.err.println(context.getText());// empty
+//        System.err.println(context.statement());// null
+        System.err.println(adapterParameters.getTokens());
+
 //        BufferedTokenStream tks = adapterParameters.getTokens();
 //        System.err.println(tks.getSourceName());
 //        for (Token tk : tks.getTokens()) {
-//            System.err.println(tk.getText());
+//            System.err.print(tk.getText() +  "  ");
 //        }
-//
-//        System.err.println("\r\n======================================================");
+
+        System.err.println("\r\n======================================================");
 
         throw new RuntimeException("Unknown statement type");
     }
