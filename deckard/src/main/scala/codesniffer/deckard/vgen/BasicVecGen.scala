@@ -6,10 +6,10 @@ import codesniffer.api.Node
 import codesniffer.api.`type`._
 import codesniffer.api.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
 import codesniffer.api.expr._
-import codesniffer.api.stmt.{BlockStmt, ExpressionStmt, Statement}
+import codesniffer.api.stmt._
 import codesniffer.api.visitor.{VoidVisitor, VoidVisitorAdapter}
 import codesniffer.core._
-import codesniffer.deckard.{MethodDescriptor, ArrayVec, CharacVec}
+import codesniffer.deckard.{ArrayVec, CharacVec, MethodDescriptor}
 
 import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
@@ -157,9 +157,10 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
   @inline
   protected def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
     if (!ctx.config.filterStmt(stmt)) {
+
       if (ctx.config.skipStmt(stmt))
         collectNodes(stmt.getChildrenNodes, vec)
-      else
+      else {
         stmt match {
           // skip ExpressionStmt
           case est: ExpressionStmt =>
@@ -167,12 +168,87 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
           // skip BlockStmt
           case bst: BlockStmt =>
             collectNodes(bst.getStmts, vec)
-          // filter others stmt
-          case fst =>
-            if (!ctx.config.filterStmt(fst))
-              putNode(fst, vec)
+          case _=>
         }
-    }
+
+        if (ctx.config.filterStmt(stmt))
+          return
+        putNode(stmt, vec)
+
+        matchInner(stmt, vec)
+
+      }// no skip
+    } // no filter
+  }
+
+
+  protected def matchInner(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]) = stmt match {
+    case doSt: DoStmt =>
+      val stmt = doSt.getBody
+      if (stmt != null)
+        collectStmt(stmt, vec)
+
+      collectExpr(doSt.getCondition, vec)
+
+    case wst: WhileStmt =>
+      collectExpr(wst.getCondition, vec)
+      collectStmt(wst.getBody, vec)
+
+    case fst: ForeachStmt =>
+      collectExpr(fst.getIterable, vec)
+      collectExpr(fst.getVariable, vec)
+      collectStmt(fst.getBody, vec)
+
+    case ast: AssertStmt =>
+      collectExpr(ast.getCheck, vec)
+
+    case sst: SynchronizedStmt =>
+      collectExpr(sst.getExpr, vec)
+      collectStmt(sst.getBlock, vec)
+
+    case forSt: ForStmt =>
+      collectNodes(forSt.getInit, vec)
+      collectExpr(forSt.getCompare, vec)
+      collectNodes(forSt.getUpdate, vec)
+      collectStmt(forSt.getBody, vec)
+
+    case trySt: TryStmt =>
+      collectNodes(trySt.getResources, vec)
+      val cas = trySt.getCatchs
+      if (cas != null && cas.size() > 0) {
+        for (ca <- cas) {
+          putNode("___CATCH___".asInstanceOf[F], vec) /////////////////////!!!!!!!!!!!!!!
+          collectNode(ca.getCatchBlock, vec)
+        }
+      }
+      collectStmt(trySt.getTryBlock, vec)
+      val fstmt = trySt.getFinallyBlock
+      if (fstmt != null) {
+        putNode("___Finally___".asInstanceOf[F], vec) /////////////////////!!!!!!!!!!!!!!
+        collectStmt(fstmt, vec)
+      }
+    case swst: SwitchStmt =>
+      collectExpr(swst.getSelector, vec)
+      val cases = swst.getEntries
+      if (cases != null && cases.length > 0) {
+        for (cs <- cases)
+          collectNodes(cs.getStmts, vec)
+      }
+    case ifSt: IfStmt =>
+      collectExpr(ifSt.getCondition, vec)
+      var stmt = ifSt.getThenStmt
+      if (stmt != null)
+        collectNode(stmt, vec)
+      stmt = ifSt.getElseStmt
+      if (stmt != null)
+        collectNode(stmt, vec)
+    case _ =>
+  } // match
+
+
+  @inline
+  protected def putNode(name:F, vec: CharacVec[F]): Unit = {
+    vec.put(name)
   }
 
   @inline
@@ -182,7 +258,12 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
           addMethodCall(call, vec)
       case _ =>
         vec.put(findNodeName(node).asInstanceOf[F])
-        collectNodes(node.getChildrenNodes, vec)
+//        println(node)
+//        if (node.getChildrenNodes != null) {
+//          println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+//          println(node.getChildrenNodes)
+//        }
+        collectNodes(node.getChildrenNodes, vec) // useless, delete
     }
 
   @inline

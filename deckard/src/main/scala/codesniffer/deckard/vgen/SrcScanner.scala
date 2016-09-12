@@ -2,6 +2,7 @@ package codesniffer.deckard.vgen
 
 import java.io.{File, FileInputStream, FilenameFilter}
 
+import codesniffer.api.CompilationUnit
 import codesniffer.api.body.MethodDeclaration
 import codesniffer.api.visitor.VoidVisitorAdapter
 import codesniffer.deckard.Location
@@ -23,7 +24,12 @@ class SrcScanner[F](val context: Context[F]) {
 
   var methodVisitor: VoidVisitorAdapter[Context[F]] = null
 
-  var processFile: (File)=> Unit = (srcFile)=>{
+  def methodVisitor_(_methodVisitor: VoidVisitorAdapter[Context[F]]): Unit = {
+    this.methodVisitor = _methodVisitor;
+    this.classVisitor.setMethodVisitor(this.methodVisitor)
+  }
+
+  var processFile: (File)=> CompilationUnit = (srcFile)=>{
     require(srcFile.isFile)
     if (!context.config.filterFile(srcFile)) {
       // update location
@@ -65,8 +71,12 @@ class SrcScanner[F](val context: Context[F]) {
           throw new RuntimeException(s"Could not travel though unit ${srcFile.getPath}", e)
       }
       stream.close()
-    }
+      cu
+    } else null.asInstanceOf[CompilationUnit]
   }
+
+
+
 
   def scanDir(dir: File, recursive: Boolean): Unit = {
     require(dir.isDirectory)

@@ -68,3 +68,25 @@ trait CharacVec[T] {
 
   def clear(): Unit
 }
+
+class NOPVec[T](val location: Location) extends CharacVec[T] {
+
+  val funcCalls = new Dummy[FunctionCall]
+
+  def count: Int = -1
+
+  def put(name: T, weight: Int): Int = -1
+
+  def clear(): Unit = {}
+
+  def distance[A](other: CharacVec[A]): Double = -1.0
+  def length: Int = -1
+  def apply(index: Int): Int = -1
+  def apply(name: T): Int = -1
+  def get(name: T): Option[Int] = None
+  def remove(name: T): Int = -1
+  def update(name: T, weight: Int): Int = -1
+  def merge(other: CharacVec[T]): this.type = this
+
+}
+

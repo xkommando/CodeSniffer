@@ -38,6 +38,7 @@
         <module>ada05</module>
         <module>deckard</module>
         <module>codefunnel</module>
+        <module>experiment</module>
     </modules>
 
     <properties>
