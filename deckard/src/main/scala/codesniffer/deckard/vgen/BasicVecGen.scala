@@ -15,7 +15,7 @@ import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._
 
 /**
- *  generate vector in a top-down approche
+ *  generate vector top-down
  *
  * Created by Bowen Cai on 4/10/2015.
  */
@@ -164,15 +164,13 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
         stmt match {
           // skip ExpressionStmt
           case est: ExpressionStmt =>
-            collectNode(est.getExpression, vec)
+            return collectExpr(est.getExpression, vec)
           // skip BlockStmt
           case bst: BlockStmt =>
-            collectNodes(bst.getStmts, vec)
+            return collectNodes(bst.getStmts, vec)
           case _=>
         }
 
-        if (ctx.config.filterStmt(stmt))
-          return
         putNode(stmt, vec)
 
         matchInner(stmt, vec)
@@ -184,36 +182,45 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
 
   protected def matchInner(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]) = stmt match {
     case doSt: DoStmt =>
+      collectExpr(doSt.getCondition, vec)
       val stmt = doSt.getBody
       if (stmt != null)
         collectStmt(stmt, vec)
 
-      collectExpr(doSt.getCondition, vec)
 
     case wst: WhileStmt =>
       collectExpr(wst.getCondition, vec)
-      collectStmt(wst.getBody, vec)
+      val stmt = wst.getBody
+      if(stmt != null)
+        collectStmt(stmt, vec)
 
     case fst: ForeachStmt =>
       collectExpr(fst.getIterable, vec)
       collectExpr(fst.getVariable, vec)
-      collectStmt(fst.getBody, vec)
+      val stmt = fst.getBody
+      if(stmt != null)
+        collectStmt(stmt, vec)
 
     case ast: AssertStmt =>
       collectExpr(ast.getCheck, vec)
 
     case sst: SynchronizedStmt =>
       collectExpr(sst.getExpr, vec)
-      collectStmt(sst.getBlock, vec)
+      collectNodes(sst.getBlock.getStmts, vec)
 
     case forSt: ForStmt =>
       collectNodes(forSt.getInit, vec)
-      collectExpr(forSt.getCompare, vec)
+      val cmpExp = forSt.getCompare
+      if (cmpExp != null)
+        collectExpr(cmpExp, vec)
       collectNodes(forSt.getUpdate, vec)
-      collectStmt(forSt.getBody, vec)
+      val bdst = forSt.getBody
+      if (bdst != null)
+        collectStmt(bdst, vec)
 
     case trySt: TryStmt =>
       collectNodes(trySt.getResources, vec)
+      collectNodes(trySt.getTryBlock.getStmts, vec)
       val cas = trySt.getCatchs
       if (cas != null && cas.size() > 0) {
         for (ca <- cas) {
@@ -221,12 +228,12 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
           collectNode(ca.getCatchBlock, vec)
         }
       }
-      collectStmt(trySt.getTryBlock, vec)
       val fstmt = trySt.getFinallyBlock
       if (fstmt != null) {
-        putNode("___Finally___".asInstanceOf[F], vec) /////////////////////!!!!!!!!!!!!!!
-        collectStmt(fstmt, vec)
+        putNode("___FINALLY___".asInstanceOf[F], vec) /////////////////////!!!!!!!!!!!!!!
+        collectNodes(fstmt.getStmts, vec)
       }
+
     case swst: SwitchStmt =>
       collectExpr(swst.getSelector, vec)
       val cases = swst.getEntries
@@ -234,6 +241,7 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
         for (cs <- cases)
           collectNodes(cs.getStmts, vec)
       }
+
     case ifSt: IfStmt =>
       collectExpr(ifSt.getCondition, vec)
       var stmt = ifSt.getThenStmt
@@ -268,8 +276,8 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
 
   @inline
   protected[codesniffer] def addMethodCall(call: MethodCallExpr, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    vec.put("MethodCallExpr".asInstanceOf[F])
-    val scope = call.getScope
+    vec.put("___MethodCallExpr___".asInstanceOf[F])
+    val scope = call.getScope // scope is the caller, e.g., in "System.out.println", "System.out" is the scope
     if (scope != null) {
       collectExpr(scope, vec)
 //      val calleeName = BasicVecGen.calleeName(call.getScope)
@@ -289,8 +297,8 @@ class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
     case a: UnaryExpr => a.getOperator.name()
     case a: ReferenceType =>
       val arr = a.getArrayCount
-      if (arr == 0) "ReferenceType"
-      else "ArrayType"
+      if (arr == 0) "___ReferenceType___"
+      else "___ArrayType___"
     case _ => node.getClass.getSimpleName
   }
 

@@ -1,19 +1,12 @@
 package codesniffer.experiment.hw1
 
 import java.io.{File, PrintWriter}
-import java.nio.file.Files
-import java.util
 
 import codesniffer.ASTHelper
-import codesniffer.api.Node
-import codesniffer.api.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
 import codesniffer.api.expr._
 import codesniffer.api.stmt._
-import codesniffer.api.visitor.{VoidVisitor, VoidVisitorAdapter}
 import codesniffer.deckard._
 import codesniffer.deckard.vgen._
-
-import scala.collection.convert.wrapAsScala._
 
 /**
   * Created by superbow on 9/10/2016.
