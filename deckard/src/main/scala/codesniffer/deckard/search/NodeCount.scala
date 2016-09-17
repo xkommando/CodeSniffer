@@ -75,7 +75,8 @@ object NodeCount {
       }
       new CounterVec[String](c.currentLocation)
     }
-    mv.after = (method: MethodDeclaration, last: CharacVec[String], c: Context[String])=> {
+    mv.after = (method, ctx)=> {
+      val last = ctx.data.get.asInstanceOf[CharacVec[String]]
       val c = last.count
       nodeCount.addAndGet(c)
       nodeGrp.synchronized{

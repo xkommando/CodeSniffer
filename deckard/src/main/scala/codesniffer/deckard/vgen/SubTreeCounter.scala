@@ -13,8 +13,8 @@ import scala.collection.convert.wrapAsScala._
 class SubTreeCounter[F] extends BasicVecGen[F] {
 
   @inline
-  override def collectNode(pnode: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit
-  = nodeCount(pnode)
+  override def collectNode(pnode: Node, ctx: Context[F]): Unit = ???
+//  = nodeCount(pnode)
 
   @inline
   def kidsCount[E <:Node](kids: java.util.List[E])(implicit ctx: Context[F]): Int = {

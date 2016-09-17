@@ -31,11 +31,11 @@ object CrossMatch {
     // save exact source to vector, for manually check
 //    scanner.methodVisitor.before = (m: MethodDeclaration, ctx: Context[String]) => new WeightedVec(BasicVecGen.newVec(m, ctx))
     val mv = new SkipLocksVecGen[String]
-    scanner.methodVisitor = mv;
+    scanner.methodVisitor = mv
     mv.classVisitor = scanner.classVisitor
     scanner.classVisitor.setMethodVisitor(mv)
-    mv.after =
-      (m: MethodDeclaration, v: CharacVec[String], ctx: Context[String]) => {
+    mv.after = (m, ctx) => {
+        val v = ctx.data.get.asInstanceOf[CharacVec[String]]
         if (v.count > 20) {
           v.data = Some(m.toString.intern())
           ctx.vecWriter.write(v)

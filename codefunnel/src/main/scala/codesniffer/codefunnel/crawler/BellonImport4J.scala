@@ -28,6 +28,8 @@ parallel
 18:10:23.769 [pool-1-thread-6] INFO  c.codefunnel.BellonImport4J$ - 3155 code clone matched and is going to be imported
 18:10:23.770 [pool-1-thread-6] INFO  c.codefunnel.BellonImport4J$ - Step 2 Finished, time elapsed: 131627 ms
  */
+
+
 /**
   * Created by Bowen Cai on 2/26/2016.
   */

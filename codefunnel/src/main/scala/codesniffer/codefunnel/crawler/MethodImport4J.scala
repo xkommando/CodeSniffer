@@ -173,7 +173,7 @@ object MethodImport4J {
       stream1.close()
 
       val stream2 = new FileInputStream(src)
-      val cu = try {// Try { cannot handle not impl error
+      val cu: CompilationUnit = try {// Try { cannot handle not impl error
 //        val tokens = new CommonTokenStream(tokenSource_)
         val tokens = new CommonTokenStream(new Java8Lexer(new runtime.ANTLRInputStream(stream2)))
         val parser = new Java8Parser(tokens)

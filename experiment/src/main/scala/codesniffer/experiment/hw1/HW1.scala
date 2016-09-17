@@ -3,6 +3,7 @@ package codesniffer.experiment.hw1
 import java.io.{File, PrintWriter}
 
 import codesniffer.ASTHelper
+import codesniffer.api.Node
 import codesniffer.api.expr._
 import codesniffer.api.stmt._
 import codesniffer.deckard._
@@ -23,92 +24,59 @@ object HW1 {
   }
 
   def work(pathToSrc: String, outPath: String): Unit = {
-
     val srcF = new File(pathToSrc)
     require(srcF.exists() && srcF.canRead)
 
-    val methodVisitor = new BasicVecGen[String] {
+    val methodVisitor = new AbstractMethodVisitor[Unit] {
+      def putNode(node: Node, ctx: Context[Unit]): Unit =
+         node match {
+          case ifs: IfStmt =>
+            ifs.getCondition match {
+              case namexp: NameExpr if namexp.getName.length > 3 =>
+                val outStr = s"${namexp.getName}  ${namexp.getBeginLine}"
+                println(outStr)
+                val soutpCall = new MethodCallExpr(new FieldAccessExpr(new NameExpr("System"), "out"), "println")
+                ASTHelper.addArgument(soutpCall, new StringLiteralExpr(outStr))
 
-      @inline
-      override protected def collectStmt(stmt: Statement, vec: CharacVec[String])(implicit ctx: Context[String]): Unit = {
-        if (!ctx.config.filterStmt(stmt)) {
-
-          if (ctx.config.skipStmt(stmt))
-            collectNodes(stmt.getChildrenNodes, vec)
-          else {
-            stmt match {
-              // skip ExpressionStmt
-              case est: ExpressionStmt =>
-                collectNode(est.getExpression, vec)
-              // skip BlockStmt
-              case bst: BlockStmt =>
-                collectNodes(bst.getStmts, vec)
-                ////////////////////////////////////// part 2 code //////////////////////////////////////
-              //            with length > 3 and are only used without !
-              case ifs: IfStmt =>
-                ifs.getCondition match {
-                  case namexp: NameExpr if namexp.getName.length > 3=>
-                    val outStr = s"${namexp.getName}  ${namexp.getBeginLine}"
-                    println(outStr)
-                    val thenst = ifs.getThenStmt
-                    val nex_System = new NameExpr("System")
-                    val nex_out = new NameExpr("out")
-                    val nex_println = new NameExpr("println")
-                    val faexp_sout = new FieldAccessExpr(nex_System, "out")
-                    val soutpCall = new MethodCallExpr(faexp_sout, "println")
-                    ASTHelper.addArgument(soutpCall, new StringLiteralExpr(outStr))
-
-                    thenst match {
-                      case bst: BlockStmt =>
-                        ASTHelper.addStmt(bst, soutpCall)
-                      case a: Statement =>
-                        val bst = new BlockStmt()
-                        ASTHelper.addStmt(bst, soutpCall)
-                        ASTHelper.addStmt(bst, thenst)
-                        ifs.setThenStmt(bst)
-                      case _=>
-                        println("error!!!!!!!!!!!!!!")
-                        println(ifs)
-                    }
-                  case _=>
+                val thenst = ifs.getThenStmt
+                thenst match {
+                  case bst: BlockStmt =>
+                    ASTHelper.addStmt(bst, soutpCall)
+                  case a: Statement =>
+                    val bst = new BlockStmt()
+                    ASTHelper.addStmt(bst, soutpCall)
+                    ASTHelper.addStmt(bst, thenst)
+                    ifs.setThenStmt(bst)
+                  case _ =>
+                    println("error!!!!!!!!!!!!!!")
+                    println(ifs)
                 }
-//                val cond = ifs.getCondition
-//                println(cond)
-              //////////////////////////////////////////////////////////////////////////////////////////
-              case _=>
+              case _ => // non-if
             }
-
-            if (ctx.config.filterStmt(stmt))
-              return
-            putNode(stmt, vec)
-            matchInner(stmt, vec)
-          }// no skip
-        } // no filter
-      }
+          case _ => // node type
+        }
     }
 
-//    var before: (MethodDeclaration, Context[F])=> CharacVec[F] = BasicVecGen.newVec[F]
-    methodVisitor.before =(m, ctx) => new NOPVec[String](location = null)
-
-    val scanner = new SrcScanner(new Context[String](
+    val scanner = new SrcScanner(new Context[Unit](
       config = new DirScanConfig,
       currentLocation = null,
       data = null,
-      indexer = new Indexer[String],
-      vecWriter = new VecWriter[String]{
-        override def write(vec: CharacVec[String]): Unit = {} // NOP
+      indexer = new Indexer[Unit],
+      vecWriter = new VecWriter[Unit]{
+        override def write(vec: CharacVec[Unit]): Unit = {} // NOP writer
       }))
 
-//    methodVisitor = new BasicVecGen[String]
+    methodVisitor.classVisitor = scanner.classVisitor
     scanner.methodVisitor = methodVisitor
     scanner.classVisitor.methodVisitor = methodVisitor
-    methodVisitor.classVisitor = scanner.classVisitor
-    val cu = scanner.processFile(srcF)
-    new PrintWriter(outPath) {
-      write(cu.toString)
-      close()
-    }
 
+    scanner.fileVisitor.after = (cu, ctx) =>
+      new PrintWriter(outPath) {
+        write(cu.toString)
+        close()
+      }
+
+    scanner.processFile(srcF)
   }
 
 }

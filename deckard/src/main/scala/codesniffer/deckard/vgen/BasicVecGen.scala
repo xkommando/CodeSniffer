@@ -7,7 +7,7 @@ import codesniffer.api.`type`._
 import codesniffer.api.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
 import codesniffer.api.expr._
 import codesniffer.api.stmt._
-import codesniffer.api.visitor.{VoidVisitor, VoidVisitorAdapter}
+import codesniffer.api.visitor.{GenericVisitor, VoidVisitor, VoidVisitorAdapter}
 import codesniffer.core._
 import codesniffer.deckard.{ArrayVec, CharacVec, MethodDescriptor}
 
@@ -20,13 +20,6 @@ import scala.collection.convert.wrapAsScala._
  * Created by Bowen Cai on 4/10/2015.
  */
 object BasicVecGen {
-
-  @inline
-  def newVec[F](m: MethodDeclaration, ctx: Context[F]): CharacVec[F] =
-  new ArrayVec[F](ctx.indexer, ctx.currentLocation, m.getName, extractSignature(m)).asInstanceOf[CharacVec[F]]
-
-  @inline
-  def writeVec[F](m: MethodDeclaration, v: CharacVec[F], ctx: Context[F]): Unit = ctx.vecWriter.write(v)
 
   @inline
   def extractSignature(m: MethodDeclaration): MethodDescriptor = {
@@ -82,204 +75,43 @@ object BasicVecGen {
         + s"\r\n===============================")
       "UNK"
   }
+
 }
 
-class BasicVecGen[F] extends VoidVisitorAdapter[Context[F]] {
+class BasicVecGen[F] extends AbstractMethodVisitor[F] {
 
-  @BeanProperty var classVisitor: VoidVisitor[Context[F]] = _
-
-  var before: (MethodDeclaration, Context[F])=> CharacVec[F] = BasicVecGen.newVec[F]
-  var after: (MethodDeclaration, CharacVec[F], Context[F])=> Unit = BasicVecGen.writeVec[F]
-
-  override def visit(method: MethodDeclaration, ctx: Context[F]): Unit =
-    if (!ctx.config.filterMethod(method)) {
-      val modifiers = method.getModifiers
-      if (!Modifier.isAbstract(modifiers) && !Modifier.isNative(modifiers)
-        && method.getBody != null
-        && method.getBody.getStmts != null && method.getBody.getStmts.size() > 0) {
-
-        val methodName = method.getName
-
-        val prevLoc = ctx.currentLocation
-        ctx.currentLocation = ctx.currentLocation.enterMethod(methodName, method.getBeginLine, method.getEndLine)
-        val vec = before(method, ctx)
-
-        try {
-          collectNodes(method.getBody.getStmts, vec)(ctx)
-        } catch {
-          case e: Exception => throw new RuntimeException(s"Could not travel though method ${ctx.currentLocation}", e)
-        }
-        after(method, vec, ctx)
-        ctx.currentLocation = prevLoc
-      }
-    }
-
-  @inline
-  def collectNodes[E <:Node](nodes: java.util.List[E], vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    if (nodes != null && nodes.size > 0)
-      for (n <- nodes)
-        collectNode(n, vec)(ctx)
+  before = (methodDec, ctx) => {
+    ctx.data = Some(new ArrayVec[F](ctx.indexer, ctx.currentLocation,
+      methodDec.getName, BasicVecGen.extractSignature(methodDec)).asInstanceOf[CharacVec[F]])
   }
 
-  def collectNode(pnode: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    val cfg = ctx.config
-    if (!cfg.filterNode(pnode)) {
-      if (ctx.config.skipNode(pnode)) {
-        collectNodes(pnode.getChildrenNodes, vec)
-      } else
-        pnode match {
-          case stmt: Statement => collectStmt(stmt, vec)
-          case expr: Expression =>  collectExpr(expr, vec)
-          // continue with new class
-          case tp: ClassOrInterfaceDeclaration if !tp.isInterface =>
-            classVisitor.visit(tp, ctx)
-          case node => putNode(node, vec)
-        }
-    }
+  after = (methodDec, ctx) => {
+    val vec = ctx.data.get.asInstanceOf[CharacVec[F]]
+    ctx.vecWriter.write(vec)
   }
 
-  @inline
-  protected def collectExpr(expr: Expression, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    if (!ctx.config.filterExpr(expr)) {
-      if (ctx.config.skipExpr(expr))
-        collectNodes(expr.getChildrenNodes, vec)
-      else
-        expr match {
-          // skip enclosed expr
-          case e: EnclosedExpr =>
-            collectExpr(e.getInner, vec)
-          case ot => putNode(ot, vec)
-        }
-    }
-  }
-
-
-  @inline
-  protected def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    if (!ctx.config.filterStmt(stmt)) {
-
-      if (ctx.config.skipStmt(stmt))
-        collectNodes(stmt.getChildrenNodes, vec)
-      else {
-        stmt match {
-          // skip ExpressionStmt
-          case est: ExpressionStmt =>
-            return collectExpr(est.getExpression, vec)
-          // skip BlockStmt
-          case bst: BlockStmt =>
-            return collectNodes(bst.getStmts, vec)
-          case _=>
-        }
-
-        putNode(stmt, vec)
-
-        matchInner(stmt, vec)
-
-      }// no skip
-    } // no filter
-  }
-
-
-  protected def matchInner(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]) = stmt match {
-    case doSt: DoStmt =>
-      collectExpr(doSt.getCondition, vec)
-      val stmt = doSt.getBody
-      if (stmt != null)
-        collectStmt(stmt, vec)
-
-
-    case wst: WhileStmt =>
-      collectExpr(wst.getCondition, vec)
-      val stmt = wst.getBody
-      if(stmt != null)
-        collectStmt(stmt, vec)
-
-    case fst: ForeachStmt =>
-      collectExpr(fst.getIterable, vec)
-      collectExpr(fst.getVariable, vec)
-      val stmt = fst.getBody
-      if(stmt != null)
-        collectStmt(stmt, vec)
-
-    case ast: AssertStmt =>
-      collectExpr(ast.getCheck, vec)
-
-    case sst: SynchronizedStmt =>
-      collectExpr(sst.getExpr, vec)
-      collectNodes(sst.getBlock.getStmts, vec)
-
-    case forSt: ForStmt =>
-      collectNodes(forSt.getInit, vec)
-      val cmpExp = forSt.getCompare
-      if (cmpExp != null)
-        collectExpr(cmpExp, vec)
-      collectNodes(forSt.getUpdate, vec)
-      val bdst = forSt.getBody
-      if (bdst != null)
-        collectStmt(bdst, vec)
-
-    case trySt: TryStmt =>
-      collectNodes(trySt.getResources, vec)
-      collectNodes(trySt.getTryBlock.getStmts, vec)
-      val cas = trySt.getCatchs
-      if (cas != null && cas.size() > 0) {
-        for (ca <- cas) {
-          putNode("___CATCH___".asInstanceOf[F], vec) /////////////////////!!!!!!!!!!!!!!
-          collectNode(ca.getCatchBlock, vec)
-        }
-      }
-      val fstmt = trySt.getFinallyBlock
-      if (fstmt != null) {
-        putNode("___FINALLY___".asInstanceOf[F], vec) /////////////////////!!!!!!!!!!!!!!
-        collectNodes(fstmt.getStmts, vec)
-      }
-
-    case swst: SwitchStmt =>
-      collectExpr(swst.getSelector, vec)
-      val cases = swst.getEntries
-      if (cases != null && cases.length > 0) {
-        for (cs <- cases)
-          collectNodes(cs.getStmts, vec)
-      }
-
-    case ifSt: IfStmt =>
-      collectExpr(ifSt.getCondition, vec)
-      var stmt = ifSt.getThenStmt
-      if (stmt != null)
-        collectNode(stmt, vec)
-      stmt = ifSt.getElseStmt
-      if (stmt != null)
-        collectNode(stmt, vec)
-    case _ =>
-  } // match
-
-
-  @inline
-  protected def putNode(name:F, vec: CharacVec[F]): Unit = {
-    vec.put(name)
-  }
-
-  @inline
-  protected def putNode(node: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit =
+  override def putNode(node: Node,  ctx: Context[F]): Unit = {
+    val vec = ctx.data.get.asInstanceOf[CharacVec[F]]
     node match {
       case call: MethodCallExpr =>
-          addMethodCall(call, vec)
+        addMethodCall(call, vec)(ctx)
       case _ =>
         vec.put(findNodeName(node).asInstanceOf[F])
-//        println(node)
-//        if (node.getChildrenNodes != null) {
-//          println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-//          println(node.getChildrenNodes)
-//        }
-        collectNodes(node.getChildrenNodes, vec) // useless, delete
+        //        println(node)
+        //        if (node.getChildrenNodes != null) {
+        //          println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        //          println(node.getChildrenNodes)
+        //        }
+        collectNodes(node.getChildrenNodes, ctx) // useless, delete
     }
+  }
 
   @inline
   protected[codesniffer] def addMethodCall(call: MethodCallExpr, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    vec.put("___MethodCallExpr___".asInstanceOf[F])
+    vec.put(call.getClass.getSimpleName.asInstanceOf[F])
     val scope = call.getScope // scope is the caller, e.g., in "System.out.println", "System.out" is the scope
     if (scope != null) {
-      collectExpr(scope, vec)
+      collectExpr(scope, ctx)
 //      val calleeName = BasicVecGen.calleeName(call.getScope)
 //      val methodName = call.getName
 //      val lsExps = call.getArgs

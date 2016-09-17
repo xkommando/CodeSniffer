@@ -18,60 +18,35 @@ class SkipLocksVecGen[F] extends BasicVecGen[F] {
   val locks = new ThreadLocal[Int]()
   locks.set(0)
 
-  @inline
-  override def collectStmt(stmt: Statement, vec: CharacVec[F])(implicit ctx: Context[F]): Unit = {
-    if (!ctx.config.filterStmt(stmt)) {
-      if (ctx.config.skipStmt(stmt))
-        collectNodes(stmt.getChildrenNodes, vec)
 
-      else stmt match {
-        // skip ExpressionStmt
-        case est: ExpressionStmt =>
-          collectNode(est.getExpression, vec)
-        // skip BlockStmt
-        case bst: BlockStmt =>
-          collectNodes(bst.getStmts, vec)
-        // skip synchronized
-        case syncStmt: SynchronizedStmt =>
-          val bk = syncStmt.getBlock
-          if (bk != null)
-            collectNodes(bk.getStmts, vec)
-
-        // filter others stmt
-        case fst =>
-          if (!ctx.config.filterStmt(fst))
-            putNode(fst, vec)
-      }
-    }
-  }
-
-  override protected def putNode(node: Node, vec: CharacVec[F])(implicit ctx: Context[F]): Unit =
-    node match {
-      case call: MethodCallExpr =>
-        call.getName match {
-          case "lock" => locks.set(locks.get() + 1)
-          case "unlock" => locks.set(locks.get() - 1)
-          case _ => addMethodCall(call, vec)
-        }
-      case tryStmt: TryStmt =>
-        collectNodes(tryStmt.getResources, vec)
-        collectNode(tryStmt.getTryBlock, vec)
-        val ct = tryStmt.getCatchs
-        collectNodes(ct, vec)
-
-        val fb = tryStmt.getFinallyBlock
-        if (fb != null) {
-          val lks = locks.get()
-          collectNode(fb, vec)
-          val lks2 = locks.get()
-          if (lks2 >= lks && ct != null && ct.size > 0) // no unlock op, or got catch claus
-            vec.put("TryStmt".asInstanceOf[F])
-        } else vec.put("TryStmt".asInstanceOf[F])
-
-      case _ =>
-        vec.put(findNodeName(node).asInstanceOf[F])
-        collectNodes(node.getChildrenNodes, vec)
-    }
+  override def putNode(node: Node, ctx: Context[F]): Unit = ???
+//    node match {
+//      case call: MethodCallExpr =>
+//        call.getName match {
+//          case "lock" => locks.set(locks.get() + 1)
+//          case "unlock" => locks.set(locks.get() - 1)
+//          case _ => addMethodCall(call, vec)
+//        }
+//      case tryStmt: TryStmt =>
+//        collectNodes(tryStmt.getResources, vec)
+//        collectNode(tryStmt.getTryBlock, vec)
+//        val ct = tryStmt.getCatchs
+//        collectNodes(ct, vec)
+//
+//        val fb = tryStmt.getFinallyBlock
+//        if (fb != null) {
+//          val lks = locks.get()
+//          collectNode(fb, vec)
+//          val lks2 = locks.get()
+//          if (lks2 >= lks && ct != null && ct.size > 0) // no unlock op, or got catch claus
+//            vec.put("TryStmt".asInstanceOf[F])
+//        } else vec.put("TryStmt".asInstanceOf[F])
+//
+//      case _ =>
+//        vec.put(findNodeName(node).asInstanceOf[F])
+//        collectNodes(node.getChildrenNodes, vec)
+//    }
+//  }
 }
 
 //        // skip unlock call

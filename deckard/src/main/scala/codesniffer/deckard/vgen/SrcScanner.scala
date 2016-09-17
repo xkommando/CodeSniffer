@@ -25,11 +25,11 @@ class SrcScanner[F](val context: Context[F]) {
   var methodVisitor: VoidVisitorAdapter[Context[F]] = null
 
   def methodVisitor_(_methodVisitor: VoidVisitorAdapter[Context[F]]): Unit = {
-    this.methodVisitor = _methodVisitor;
+    this.methodVisitor = _methodVisitor
     this.classVisitor.setMethodVisitor(this.methodVisitor)
   }
 
-  var processFile: (File)=> CompilationUnit = (srcFile)=>{
+  var processFile: (File)=> Unit = (srcFile)=>{
     require(srcFile.isFile)
     if (!context.config.filterFile(srcFile)) {
       // update location
@@ -71,8 +71,7 @@ class SrcScanner[F](val context: Context[F]) {
           throw new RuntimeException(s"Could not travel though unit ${srcFile.getPath}", e)
       }
       stream.close()
-      cu
-    } else null.asInstanceOf[CompilationUnit]
+    }
   }
 
 
