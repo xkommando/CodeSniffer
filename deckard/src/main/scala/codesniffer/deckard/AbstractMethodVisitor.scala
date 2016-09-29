@@ -1,17 +1,16 @@
-package codesniffer.deckard.vgen
+package codesniffer.deckard
 
 import java.lang.reflect.Modifier
 
-import codesniffer.api
 import codesniffer.api.Node
 import codesniffer.api.body.{ClassOrInterfaceDeclaration, MethodDeclaration}
-import codesniffer.api.expr.{UnaryExpr, _}
+import codesniffer.api.expr._
 import codesniffer.api.stmt.{IfStmt, SwitchStmt, _}
 import codesniffer.api.visitor.{VoidVisitor, VoidVisitorAdapter}
-import codesniffer.deckard.CharacVec
+import codesniffer.deckard.vgen.{Context, FinallyBlockStmt}
 
-import scala.collection.convert.wrapAsScala._
 import scala.beans.BeanProperty
+import scala.collection.convert.wrapAsScala._
 
 /**
   * Created by superbow on 9/17/2016.

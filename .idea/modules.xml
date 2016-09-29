@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/CodeSniffer.iml" filepath="$PROJECT_DIR$/CodeSniffer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ada05/ada05.iml" filepath="$PROJECT_DIR$/ada05/ada05.iml" />
+      <module fileurl="file://$PROJECT_DIR$/api/api.iml" filepath="$PROJECT_DIR$/api/api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/clang/clang.iml" filepath="$PROJECT_DIR$/clang/clang.iml" />
+      <module fileurl="file://$PROJECT_DIR$/codefunnel/codefunnel.iml" filepath="$PROJECT_DIR$/codefunnel/codefunnel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/core.iml" filepath="$PROJECT_DIR$/core/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deckard/deckard.iml" filepath="$PROJECT_DIR$/deckard/deckard.iml" />
+      <module fileurl="file://$PROJECT_DIR$/experiment/experiment.iml" filepath="$PROJECT_DIR$/experiment/experiment.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java8/java8.iml" filepath="$PROJECT_DIR$/java8/java8.iml" />
+      <module fileurl="file://$PROJECT_DIR$/webface/webface.iml" filepath="$PROJECT_DIR$/webface/webface.iml" />
+    </modules>
+  </component>
+</project>

@@ -9,7 +9,7 @@ import codesniffer.api.expr._
 import codesniffer.api.stmt._
 import codesniffer.api.visitor.{GenericVisitor, VoidVisitor, VoidVisitorAdapter}
 import codesniffer.core._
-import codesniffer.deckard.{ArrayVec, CharacVec, MethodDescriptor}
+import codesniffer.deckard.{AbstractMethodVisitor, ArrayVec, CharacVec, MethodDescriptor}
 
 import scala.beans.BeanProperty
 import scala.collection.convert.wrapAsScala._

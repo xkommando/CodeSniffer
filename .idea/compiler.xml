@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <resourceExtensions />
+    <wildcardResourcePatterns>
+      <entry name="!?*.java" />
+      <entry name="!?*.form" />
+      <entry name="!?*.class" />
+      <entry name="!?*.groovy" />
+      <entry name="!?*.scala" />
+      <entry name="!?*.flex" />
+      <entry name="!?*.kt" />
+      <entry name="!?*.clj" />
+      <entry name="!?*.aj" />
+    </wildcardResourcePatterns>
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="false">
+        <processorPath useClasspath="true" />
+      </profile>
+      <profile default="false" name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="ada05" />
+        <module name="api" />
+        <module name="clang" />
+        <module name="codefunnel" />
+        <module name="core" />
+        <module name="deckard" />
+        <module name="experiment" />
+        <module name="java7" />
+        <module name="java8" />
+        <module name="webface" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="ada05" target="1.7" />
+      <module name="api" target="1.7" />
+      <module name="clang" target="1.7" />
+      <module name="codefunnel" target="1.7" />
+      <module name="CodeSniffer" target="1.7" />
+      <module name="core" target="1.7" />
+      <module name="cpp14" target="1.7" />
+      <module name="deckard" target="1.7" />
+      <module name="experiment" target="1.7" />
+      <module name="java7" target="1.7" />
+      <module name="java8" target="1.7" />
+      <module name="webface" target="1.7" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

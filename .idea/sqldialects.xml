@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/codefunnel/sql/pg_bellon_pojs.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/sql/pg_code_clone_benchmark_create.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/sql/pg_create_1.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/sql/pg_populate_2.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/sql/tmp.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/src/main/scala/codesniffer/codefunnel/crawler/BellonImport4J.scala" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/src/main/scala/codesniffer/codefunnel/crawler/MethodImport4J.scala" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/codefunnel/src/main/scala/codesniffer/codefunnel/crawler/PojImport.scala" dialect="PostgreSQL" />
+  </component>
+</project>
